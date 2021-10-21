@@ -24,6 +24,8 @@ Bounce debouncerButtonEncoder = Bounce();
 psuADS1115ADC adc(&ads1115);				// 1001000; ADDR PIN LOW;  CHA: V_ADJ;			CH2: TH0
 psuDAC dac(&DAC);
 
+DLComms comm(Serial1);
+
 // uint32_t lastADCupdateMillis = 0;
 
 // uint16_t adcVoltageRead[ADC_AVERAGING] = { 0 };
@@ -171,19 +173,21 @@ void processUART()
 	// TX
 	if ((millis() - lastUARTsendMillis > UART_SEND_INTERVAL))
 	{
-		auto *const valuePacket = reinterpret_cast<DLData_t *const>(DataBuffer);
+		// auto *const currentPacket = reinterpret_cast<DLComms::DLPacket_t *const>(DataBuffer);
 
-		valuePacket->Command = DL_COMMAND::DATA;
-		valuePacket->currentRead = milliAmpsReadVal;
-		valuePacket->currentSet = milliAmpsSetVal;
-		valuePacket->voltageRead = voltsReadVal;
-		valuePacket->CRC = 0;
+		// valuePacket->Command = DLComms::DL_COMMAND::DATA;
+		// valuePacket->currentRead = milliAmpsReadVal;
+		// valuePacket->currentSet = milliAmpsSetVal;
+		// valuePacket->voltageRead = voltsReadVal;
+		// valuePacket->CRC = 0;
 
-		uint32_t checksum = CRC32::calculate(DataBuffer, sizeof(DataBuffer));
+		// uint32_t checksum = CRC32::calculate(DataBuffer, sizeof(DataBuffer));
 
-		valuePacket->CRC = checksum;
+		// valuePacket->CRC = checksum;
 
-		Serial1.write(DataBuffer, sizeof(DataBuffer));
+		// Serial1.write(DataBuffer, sizeof(DataBuffer));
+
+
 
 		// for (uint8_t n = 0; n < sizeof(DataBuffer); n++)
 		// {
@@ -191,6 +195,8 @@ void processUART()
 		// 	Serial.print(" ");
 		// }
 		// Serial.println();
+
+		comm.sendData(milliAmpsSetVal, milliAmpsReadVal, voltsReadVal, 0);
 
 		lastUARTsendMillis = millis();
 	}
