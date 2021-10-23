@@ -14,7 +14,7 @@ class DLComms
 {
 	public:
 
-		typedef enum class DL_COMMAND : uint8_t
+		typedef enum DL_COMMAND : uint8_t
 		{
 			NONE =						0x00,
 			DATA =						0x10,	// Measuring data packet

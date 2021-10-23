@@ -13,6 +13,7 @@ void setup() {
 			Serial.println(data->currentRead);
 			Serial.println(data->currentSet);
 			Serial.println(data->voltageRead);
+			Serial.println(data->powerRead);
 			});
 }
 
