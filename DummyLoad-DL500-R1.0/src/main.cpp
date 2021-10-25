@@ -38,9 +38,17 @@ ButtonDebouncer ButtonEncoder;
 // state machine
 
 uint16_t milliAmpsSetVal = 0;
+uint16_t milliAmpsSetValDisplay = 0;
 uint16_t milliAmpsReadVal = 0;
 uint16_t voltsReadVal = 0;
 uint32_t powerReadVal = 0;
+
+uint8_t IP[4] = {0, 0, 0, 0};
+uint8_t NM[4] = {0, 0, 0, 0};
+uint8_t GW[4] = {0, 0, 0, 0};
+
+char SSID[32] = 	"DL500";
+char WPA2PSK[32] = 	"DL500PSK";
 
 uint32_t lastUARTsendMillis = 0;
 
@@ -55,44 +63,73 @@ void setup()
 	
 	Serial.begin(115200);
 	Serial1.begin(28800, SERIAL_8N1);
-	
+
+	// while(!Serial.available()){};
+	// Serial.println("Hello world");
+
 	initPins();
-	dldisplay.Init(DLDisplay::DL_DISPLAY::VALUES, &milliAmpsSetVal, &milliAmpsReadVal, &voltsReadVal, &powerReadVal, DISPLAY_UPDATE_INVERVAL);
-	
+	dldisplay.Init(DLDisplay::DL_DISPLAY::VALUES1, &milliAmpsSetVal, &milliAmpsSetValDisplay, &milliAmpsReadVal, &voltsReadVal, &powerReadVal, DISPLAY_UPDATE_INVERVAL);
+	dldisplay.InitNetworkVals(IP, NM, GW, SSID, WPA2PSK);
 
-	dldisplay.OnEncoderUp([]() {
-		if (milliAmpsSetVal + 1 <= CURRENT_UPPER_LIMIT)
+	dldisplay.OnEncoderUp([](uint16_t newVal) {
+		if (newVal <= CURRENT_UPPER_LIMIT)
 		{
-			dldisplay.EncoderUp();
-			milliAmpsSetVal += 1;
-			dac.set(milliAmpsSetVal);
+			// dldisplay.EncoderUp();
+			milliAmpsSetValDisplay = newVal;
+			// dac.set(milliAmpsSetVal);
 		}
 		else
 		{
-			milliAmpsSetVal = CURRENT_UPPER_LIMIT;
+			milliAmpsSetValDisplay = CURRENT_UPPER_LIMIT;
 		}
 		dldisplay.Refresh();
 	});
 
-	dldisplay.OnEncoderDown([]() {
-		if (milliAmpsSetVal >= CURRENT_LOWER_LIMIT + 1)
+	dldisplay.OnEncoderDown([](uint16_t newVal) {
+		if (newVal >= CURRENT_LOWER_LIMIT && newVal <= CURRENT_UPPER_LIMIT)
 		{
-			dldisplay.EncoderDown();
-			milliAmpsSetVal -= 1;
-			dac.set(milliAmpsSetVal);
+			// dldisplay.EncoderDown();
+			milliAmpsSetValDisplay = newVal;
+			// dac.set(milliAmpsSetVal);
 		}
 		else
 		{
-			milliAmpsSetVal = CURRENT_LOWER_LIMIT;
+			milliAmpsSetValDisplay = CURRENT_LOWER_LIMIT;
 		}
 		dldisplay.Refresh();
 	});
 
-	ButtonEncoder.Begin(NULL, 	 BDButtonState::PRESSED);
+	dldisplay.OnEncoderConfirmValue([](uint16_t newVal) {
+		milliAmpsSetVal = newVal;
+		dac.set(milliAmpsSetVal);
+		
+		// dldisplay.Refresh();
+	});
+
+	ButtonEncoder.Begin(NULL, 	 BDButtonState::PRESSED | BDButtonState::HOLD);
 	ButtonEncoder.OnButtonPress([](void *, uint8_t buttonID) {
 		Serial.println("ButtonEncoder_OnButtonPress!");
 		dldisplay.ButtonPressed();
 	});
+
+	ButtonEncoder.OnButtonHold([](void *, uint8_t buttonID) {
+		Serial.println("ButtonEncoder_OnButtonRepeat!");
+		dldisplay.ButtonHold();
+	});
+
+	DLDisplay::DLPage_t *ValuesPage = dldisplay.AddPage(	"     SET|   READ|   ",
+															"  0.000A| 0.000V|   ",
+															"        | 0.000A|   ",
+															"        | 0.000W|   ");
+
+	dldisplay.AddPageItem(ValuesPage, &milliAmpsSetVal, 1, 1, true, true);
+	dldisplay.AddPageItem(ValuesPage, "Cfg", 2, 4, DLDisplay::DLPAGEENUM::CONFIG, true, false);
+	dldisplay.AddPageItem(ValuesPage, &voltsReadVal, 1, 9, false);
+	dldisplay.AddPageItem(ValuesPage, &milliAmpsReadVal, 2, 9, false);
+	dldisplay.AddPageItem(ValuesPage, &powerReadVal, 3, 9, false);
+
+	dldisplay.SetPage(DLDisplay::DLPAGEENUM::VALUES);
+
 
 	// initDisplay();
 	// drawHomeScaffold();
