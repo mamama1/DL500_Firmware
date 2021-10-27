@@ -41,7 +41,7 @@ uint16_t milliAmpsSetVal = 0;
 uint16_t milliAmpsSetValDisplay = 0;
 uint16_t milliAmpsReadVal = 0;
 uint16_t voltsReadVal = 0;
-uint32_t powerReadVal = 0;
+uint16_t powerReadVal = 0;
 
 uint8_t IP[4] = {0, 0, 0, 0};
 uint8_t NM[4] = {0, 0, 0, 0};
@@ -51,6 +51,8 @@ char SSID[32] = 	"DL500";
 char WPA2PSK[32] = 	"DL500PSK";
 
 uint32_t lastUARTsendMillis = 0;
+
+uint32_t heartbeatMillis = 0;
 
 // prototypes
 void initPins();
@@ -113,22 +115,25 @@ void setup()
 	});
 
 	ButtonEncoder.OnButtonHold([](void *, uint8_t buttonID) {
-		Serial.println("ButtonEncoder_OnButtonRepeat!");
+		Serial.println("ButtonEncoder_OnButtonHold!");
 		dldisplay.ButtonHold();
 	});
 
-	DLDisplay::DLPage_t *ValuesPage = dldisplay.AddPage(	"     SET|   READ|   ",
-															"  0.000A| 0.000V|   ",
-															"        | 0.000A|   ",
-															"        | 0.000W|   ");
+	dldisplay.AddPage(	"     SET|   READ|   ",
+						"  0.000A| 0.000V|   ",
+						"        | 0.000A|   ",
+						"        | 0.000W|   ");
+	// dldisplay.AddPage(	"     SET|   READ|   ",
+	// 					"       A|      V|   ",
+	// 					"        |      A|   ",
+	// 					"        |      W|   ");
+	dldisplay.AddPageItem(0, &milliAmpsSetVal, 1, 1, true, true);
+	dldisplay.AddPageItem(0, "Cfg", 2, 4, 1, true, false);
+	dldisplay.AddPageItem(0, &voltsReadVal, 1, 9, false);
+	dldisplay.AddPageItem(0, &milliAmpsReadVal, 2, 9, false);
+	dldisplay.AddPageItem(0, &powerReadVal, 3, 9, false);
 
-	dldisplay.AddPageItem(ValuesPage, &milliAmpsSetVal, 1, 1, true, true);
-	dldisplay.AddPageItem(ValuesPage, "Cfg", 2, 4, DLDisplay::DLPAGEENUM::CONFIG, true, false);
-	dldisplay.AddPageItem(ValuesPage, &voltsReadVal, 1, 9, false);
-	dldisplay.AddPageItem(ValuesPage, &milliAmpsReadVal, 2, 9, false);
-	dldisplay.AddPageItem(ValuesPage, &powerReadVal, 3, 9, false);
-
-	dldisplay.SetPage(DLDisplay::DLPAGEENUM::VALUES);
+	dldisplay.SetPage(0);
 
 
 	// initDisplay();
@@ -145,6 +150,14 @@ void loop()
 	dac.process();
 	dldisplay.Process();
 	processUART();
+
+
+	if (millis() - heartbeatMillis > 600)
+	{
+		Serial.println("Heartbeat");
+		
+		heartbeatMillis = millis();
+	}
 }
 
 void initPins()

@@ -9,7 +9,7 @@ DLDisplay::DLDisplay() :
 	this->_encoderOldPosition = enc.read();
 }
 
-void DLDisplay::Init(DLDisplay_t initialState, uint16_t *currentSet, uint16_t *currentSetDisplay, uint16_t *currentRead, uint16_t *voltageRead, uint32_t *powerRead, uint16_t displayUpdateIntervalMillis)
+void DLDisplay::Init(DLDisplay_t initialState, uint16_t *currentSet, uint16_t *currentSetDisplay, uint16_t *currentRead, uint16_t *voltageRead, uint16_t *powerRead, uint16_t displayUpdateIntervalMillis)
 {
 	this->_currentSet = currentSet;
 	this->_currentRead = currentRead;
@@ -87,93 +87,128 @@ void DLDisplay::Init(DLDisplay_t initialState, uint16_t *currentSet, uint16_t *c
 	// this->SetPage(DLPAGEENUM::VALUES);
 }
 
-DLDisplay::DLPage_t* DLDisplay::AddPage(const char *scaffoldLine1, const char *scaffoldLine2, const char *scaffoldLine3, const char *scaffoldLine4)
+uint8_t DLDisplay::AddPage(const char *scaffoldLine1, const char *scaffoldLine2, const char *scaffoldLine3, const char *scaffoldLine4)
 {
 	this->_pageCount++;
 	this->_pages = (DLPage_t*)realloc(this->_pages, this->_pageCount * sizeof(DLPage_t));
 	
 	this->_checkNullPtr(this->_pages);
-
+	
 	this->_pages[this->_pageCount - 1].scaffoldLines[0] = &scaffoldLine1;
 	this->_pages[this->_pageCount - 1].scaffoldLines[1] = &scaffoldLine2;
 	this->_pages[this->_pageCount - 1].scaffoldLines[2] = &scaffoldLine3;
 	this->_pages[this->_pageCount - 1].scaffoldLines[3] = &scaffoldLine4;
+	
+	this->_pages[this->_pageCount - 1].pageItems = NULL;
+	this->_pages[this->_pageCount - 1].pageItemCount = 0;
+	this->_pages[this->_pageCount - 1].selectedItem = NULL;
 
 	// *(this->_pages[this->_pageCount - 1]).scaffoldLines[0] = *scaffoldLine1;
 	// *(this->_pages[this->_pageCount - 1]).scaffoldLines[2] = *scaffoldLine2;
 	// *(this->_pages[this->_pageCount - 1]).scaffoldLines[3] = *scaffoldLine3;
 	// *(this->_pages[this->_pageCount - 1]).scaffoldLines[4] = *scaffoldLine4;
 
-	return &this->_pages[this->_pageCount - 1];
+	// return &this->_pages[this->_pageCount - 1];
+	return this->_pageCount - 1;
 }
 
-DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(DLPage_t *page, uint16_t *uint16ValPtr, uint8_t row, uint8_t col, bool editable, bool selected)
+DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint8_t row, uint8_t col, bool editable, bool selected)
 {
-	page->pageItemCount++;
-	page->pageItems = (DLPageItem_t*)realloc(page->pageItems, page->pageItemCount * sizeof(DLPageItem_t));
+	if (pageId + 1 > this->_pageCount)
+		return NULL;
 
-	// this->_pageItemCount++;
-	// this->_pageItems = (DLPageItem_t*)realloc(this->_pageItems, this->_pageItemCount * sizeof(DLPageItem_t));
+	this->_pages[pageId].pageItemCount++;
+	this->_pages[pageId].pageItems = (DLPageItem_t*)realloc(this->_pages[pageId].pageItems, this->_pages[pageId].pageItemCount * sizeof(DLPageItem_t));
 
-	this->_checkNullPtr(page->pageItems);
+	this->_checkNullPtr(this->_pages[pageId].pageItems);
 
-	page->pageItems[page->pageItemCount - 1].valuePtr = uint16ValPtr;
-	page->pageItems[page->pageItemCount - 1].row = row;
-	page->pageItems[page->pageItemCount - 1].col = col;
-	page->pageItems[page->pageItemCount - 1].selectable = editable;
-	page->pageItems[page->pageItemCount - 1].action = DLITEMACTION::EDIT;
-	page->pageItems[page->pageItemCount - 1].type = DLITEMTYPE::UINT16;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].valuePtr = uint16ValPtr;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].row = row;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].col = col;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].selectable = editable;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].action = DLITEMACTION::EDIT;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].type = DLITEMTYPE::UINT16;
+
+	if (editable)
+	{
+		this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].tmpValue = *uint16ValPtr;
+	}
 
 	if (selected)
-		page->selectedItem = &page->pageItems[page->pageItemCount - 1];
+		this->_pages[pageId].selectedItem = &this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1];
 
-	return &page->pageItems[page->pageItemCount - 1];
+	return &this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1];
 }
 
-DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(DLPage_t *page, uint32_t *uint32ValPtr, uint8_t row, uint8_t col, bool editable, bool selected)
+// DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint32_t *uint32ValPtr, uint8_t row, uint8_t col, bool editable, bool selected)
+// {
+// 	if (pageId + 1 > this->_pageCount)
+// 		return NULL;
+
+// 	this->_pages[pageId].pageItemCount++;
+// 	this->_pages[pageId].pageItems = (DLPageItem_t*)realloc(this->_pages[pageId].pageItems, this->_pages[pageId].pageItemCount * sizeof(DLPageItem_t));
+	
+// 	this->_checkNullPtr(this->_pages[pageId].pageItems);
+
+// 	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].valuePtr = uint32ValPtr;
+// 	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].row = row;
+// 	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].col = col;
+// 	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].selectable = editable;
+// 	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].action = DLITEMACTION::EDIT;
+// 	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].type = DLITEMTYPE::UINT32;
+
+// 	if (editable)
+// 	{
+// 		this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].tmpValue = *uint32ValPtr;
+// 	}
+
+// 	if (selected)
+// 		this->_pages[pageId].selectedItem = &this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1];
+
+// 	return &this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1];
+// }
+
+DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t targetPageId, bool selectable, bool selected)
 {
-	page->pageItemCount++;
-	page->pageItems = (DLPageItem_t*)realloc(page->pageItems, page->pageItemCount * sizeof(DLPageItem_t));
+	if (pageId + 1 > this->_pageCount)
+		return NULL;
+	
+	this->_pages[pageId].pageItemCount++;
+	this->_pages[pageId].pageItems = (DLPageItem_t*)realloc(this->_pages[pageId].pageItems, this->_pages[pageId].pageItemCount * sizeof(DLPageItem_t));
+	
+	// // page->pageItems = (DLPageItem_t*)realloc(page->pageItems, page->pageItemCount * sizeof(DLPageItem_t));
 
-	// this->_pageItemCount++;
-	// this->_pageItems = (DLPageItem_t*)realloc(this->_pageItems, this->_pageItemCount * sizeof(DLPageItem_t));
-
-	this->_checkNullPtr(page->pageItems);
-
-	page->pageItems[page->pageItemCount - 1].valuePtr = uint32ValPtr;
-	page->pageItems[page->pageItemCount - 1].row = row;
-	page->pageItems[page->pageItemCount - 1].col = col;
-	page->pageItems[page->pageItemCount - 1].selectable = editable;
-	page->pageItems[page->pageItemCount - 1].action = DLITEMACTION::EDIT;
-	page->pageItems[page->pageItemCount - 1].type = DLITEMTYPE::UINT32;
+	// // this->_pageItemCount++;
+	// // this->_pageItems = (DLPageItem_t*)realloc(this->_pageItems, this->_pageItemCount * sizeof(DLPageItem_t));
+	
+	this->_checkNullPtr(this->_pages[pageId].pageItems);
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].text = text;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].row = row;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].col = col;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].selectable = selectable;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].targetPageId = targetPageId;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].action = DLITEMACTION::JUMP;
+	this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1].type = DLITEMTYPE::STRING;
+	
 
 	if (selected)
-		page->selectedItem = &page->pageItems[page->pageItemCount - 1];
+		this->_pages[pageId].selectedItem = &this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1];
 
-	return &page->pageItems[page->pageItemCount - 1];
+	return &this->_pages[pageId].pageItems[this->_pages[pageId].pageItemCount - 1];
 }
 
-DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(DLPage_t *page, const char *text, uint8_t row, uint8_t col, DLPageEnum_t targetPage, bool selectable, bool selected)
+void DLDisplay::SetPage(uint8_t pageId)
 {
-	page->pageItemCount++;
-	page->pageItems = (DLPageItem_t*)realloc(page->pageItems, page->pageItemCount * sizeof(DLPageItem_t));
+	if (pageId >= this->_pageCount)
+		return;
 
-	// this->_pageItemCount++;
-	// this->_pageItems = (DLPageItem_t*)realloc(this->_pageItems, this->_pageItemCount * sizeof(DLPageItem_t));
+	if (this->_currentPage != pageId)
+	{
+		this->_currentPage = pageId;
+		_drawPage(pageId);
+	}
 
-	this->_checkNullPtr(page->pageItems);
-
-	page->pageItems[page->pageItemCount - 1].text = &text[0];
-	page->pageItems[page->pageItemCount - 1].row = row;
-	page->pageItems[page->pageItemCount - 1].col = col;
-	page->pageItems[page->pageItemCount - 1].selectable = selectable;
-	page->pageItems[page->pageItemCount - 1].action = DLITEMACTION::JUMP;
-	page->pageItems[page->pageItemCount - 1].type = DLITEMTYPE::STRING;
-
-	if (selected)
-		page->selectedItem = &page->pageItems[page->pageItemCount - 1];
-
-	return &page->pageItems[page->pageItemCount - 1];
+	this->_currentPage = pageId;	
 }
 
 void DLDisplay::_checkNullPtr(void *ptr)
@@ -207,7 +242,7 @@ void DLDisplay::_processDisplay()
 	{
 		// Serial.println("Draw values");
 		this->_drawPageValues(this->_currentPage);
-				
+		// Serial.println("Draw values end");
 		if (this->_cursorBlink)
 		{
 			this->LCD.setCursor(this->_cursorBlinkPosX, this->_cursorBlinkPosY);
@@ -225,8 +260,15 @@ void DLDisplay::_processEncoder()
 	{
 		if (encoderNewPosition > this->_encoderOldPosition + 4)
 		{
-			if (this->_EncoderUpFunction != NULL)
-				(*_EncoderUpFunction)(*this->_currentSetDisplay + this->_getMultiplier());
+			if (this->_pages[this->_currentPage].selectedItem->editing)
+			{
+				this->_pages[this->_currentPage].selectedItem->tmpValue++;
+				this->Refresh();
+			}
+
+			// if (this->_EncoderUpFunction != NULL)
+			// 	(*_EncoderUpFunction)(*this->_currentSetDisplay + this->_getMultiplier());
+			
 			// onEncoderUp
 			// if (this->_currentState == DL_DISPLAY::VALUES)
 			// 	this->SetState(DL_DISPLAY::CONFIG);
@@ -289,8 +331,15 @@ void DLDisplay::_processEncoder()
 		}
 		else if (encoderNewPosition < this->_encoderOldPosition - 4)
 		{
-			if (this->_EncoderDownFunction != NULL)
-				(*_EncoderDownFunction)(*this->_currentSetDisplay - this->_getMultiplier());
+			if (this->_pages[this->_currentPage].selectedItem->editing)
+			{
+				this->_pages[this->_currentPage].selectedItem->tmpValue--;
+				this->Refresh();
+			}
+
+			// if (this->_EncoderDownFunction != NULL)
+			// 	(*_EncoderDownFunction)(*this->_currentSetDisplay - this->_getMultiplier());
+
 			// onEncoderDown
 			// if (this->_currentState == DL_DISPLAY::VALUES)
 			// 	this->SetState(DL_DISPLAY::CONFIG);
@@ -381,6 +430,18 @@ void DLDisplay::EncoderDown()
 
 void DLDisplay::ButtonPressed()
 {
+	if (this->_pages[this->_currentPage].selectedItem->action == DLITEMACTION::EDIT &&
+		this->_pages[this->_currentPage].selectedItem->editing == false)
+	{
+		this->_pages[this->_currentPage].selectedItem->editing = true;
+	}
+
+
+
+	// else
+	// {
+	// 	this->_pages[this->_currentPage].selectedItem->editing = false;
+	// }
 	// if (this->_currentState == DL_DISPLAY::VALUES)
 	// {
 	// 	this->SetState(DL_DISPLAY::EDIT_T);
@@ -441,20 +502,235 @@ void DLDisplay::ButtonPressed()
 
 void DLDisplay::ButtonHold()
 {
-	// this->SetState(DL_DISPLAY::VALUES);
-
-	if (this->_EncoderConfirmValueFunction != NULL)
-		(*_EncoderConfirmValueFunction)(*this->_currentSetDisplay);
-}
-
-void DLDisplay::SetPage(DLPageEnum_t page)
-{
-	if (this->_currentPage != page)
+	if (this->_pages[this->_currentPage].selectedItem->action == DLITEMACTION::EDIT &&
+		this->_pages[this->_currentPage].selectedItem->editing == true)
 	{
-		_drawPage(page);
-	}
-	this->_currentPage = page;
+		this->_pages[this->_currentPage].selectedItem->editing = false;
+
+		if (this->_EncoderConfirmValueFunction != NULL)
+		{
+			*(uint16_t*)this->_pages[this->_currentPage].selectedItem->valuePtr = this->_pages[this->_currentPage].selectedItem->tmpValue;
+			(*_EncoderConfirmValueFunction)(*(uint16_t*)this->_pages[this->_currentPage].selectedItem->valuePtr);
+		}
+	}		
 }
+
+DLDisplay::DLDisplay_t DLDisplay::GetState()
+{
+	return this->_currentState;
+}
+
+void DLDisplay::_drawPage(uint8_t pageId)
+{
+	// if (page == DLPAGEENUM::VALUES)
+	// {
+	// 	this->LCD.setCursor(0, 0);
+	// 	this->LCD.print("     SET|   READ|   "); this->LCD.setCursor(0, 1);
+	// 	this->LCD.print("> 0.000A| 0.000V|   "); this->LCD.setCursor(0, 2);
+	// 	this->LCD.print("    Cfg | 0.000A|   "); this->LCD.setCursor(0, 3);
+	// 	this->LCD.print("        | 0.000W|   ");
+
+	// 	this->LCD.setCursor(2, 2);
+	// 	this->LCD.write(byte(3));
+	// }
+	// else if (page == DLPAGEENUM::CONFIG)
+	// {
+	// 	this->LCD.setCursor(0, 0);
+	// 	this->LCD.print("> IP Configuration  "); this->LCD.setCursor(0, 1);
+	// 	this->LCD.print("  WiFi Configuration"); this->LCD.setCursor(0, 2);
+	// 	this->LCD.print("  Exit              "); this->LCD.setCursor(0, 3);
+	// 	this->LCD.print("                    ");
+	// }
+	// else if (page == DLPAGEENUM::CONFIG_IP)
+	// {
+	// 	this->LCD.setCursor(0, 0);
+	// 	this->LCD.print("> IP:               "); this->LCD.setCursor(0, 1);
+	// 	this->LCD.print("  SM:               "); this->LCD.setCursor(0, 2);
+	// 	this->LCD.print("  GW:               "); this->LCD.setCursor(0, 3);
+	// 	this->LCD.print("  Exit              ");
+	// }
+	// else if (page == DLPAGEENUM::CONFIG_WIFI)
+	// {
+	// 	this->LCD.setCursor(0, 0);
+	// 	this->LCD.print("  SSID:             "); this->LCD.setCursor(0, 1);
+	// 	this->LCD.print("  PSK:              "); this->LCD.setCursor(0, 2);
+	// 	this->LCD.print("> Exit              "); this->LCD.setCursor(0, 3);
+	// 	this->LCD.print("                    ");
+	// }
+
+	// for (uint8_t n = 0; n <= this->_pages[page].pageItemCount; n++)
+	// {
+	// 	this->LCD.setCursor(this->_pages[page].pageItems[n].col, this->_pages[page].pageItems[n].row);
+	// 	if (this->_pages[page].pageItems[n].type == DLITEMTYPE::INTEGER)
+	// 		this->_displayValue((*(uint32_t*)(this->_pages[page].pageItems[n].valuePtr)));
+	// 	else if (this->_pages[page].pageItems[n].type == DLITEMTYPE::STRING)
+	// 		this->LCD.print((*(char*)(this->_pages[page].pageItems[n].text)));
+	// }
+
+	// Serial.println("print scaffold");
+
+
+
+
+
+
+	this->LCD.setCursor(0, 0);
+	for (uint8_t n = 0; n <= 3; n++)
+	{
+		this->LCD.setCursor(0, n);
+		this->LCD.print(*this->_pages[pageId].scaffoldLines[n]);
+	}
+}
+
+void DLDisplay::_drawPageValues(uint8_t pageId)
+{
+	for (uint8_t n = 0; n < this->_pages[pageId].pageItemCount; n++)
+	{
+		if (this->_pages[pageId].selectedItem == &this->_pages[pageId].pageItems[n])
+		{
+			this->LCD.setCursor(0, this->_pages[pageId].pageItems[n].row);
+			this->LCD.print(">");
+		}
+		// Serial.println(this->_pages[pageId].pageItems[n].col);
+		// Serial.println(this->_pages[pageId].pageItems[n].row);
+
+		this->LCD.setCursor(this->_pages[pageId].pageItems[n].col, this->_pages[pageId].pageItems[n].row);
+
+		if (this->_pages[pageId].pageItems[n].type == DLITEMTYPE::UINT16)
+		{
+			if (this->_pages[pageId].pageItems[n].selectable)
+			{
+				// Serial.println(this->_pages[pageId].pageItems[n].tmpValue);
+				this->_displayValue(this->_pages[pageId].pageItems[n].tmpValue);
+			}
+			else
+			{
+				// Serial.println(*(uint16_t*)this->_pages[pageId].pageItems[n].valuePtr);
+				this->_displayValue(*(uint16_t*)this->_pages[pageId].pageItems[n].valuePtr);
+				// uint16_t value = *((uint16_t *)this->_pages[pageId].pageItems[n].valuePtr);
+				// this->_displayValue(value);
+
+			}
+			// this->_displayValue((*(uint32_t*)(this->_pages[page].pageItems[n].valuePtr)));
+		}
+		else if (this->_pages[pageId].pageItems[n].type == DLITEMTYPE::STRING)
+		{
+			// Serial.println(this->_pages[pageId].pageItems[n].text);
+			this->LCD.print(this->_pages[pageId].pageItems[n].text);
+
+			// this->LCD.print((*this->_pages[page].pageItems[n].text));
+			// this->LCD.print((*(char*)(this->_pages[page].pageItems[n].text)));
+		}
+		// else if (this->_pages[pageId].pageItems[n].type == DLITEMTYPE::UINT32)
+		// {
+		// 	if (this->_pages[pageId].pageItems[n].selectable)
+		// 	{
+		// 		this->_displayValue(this->_pages[pageId].pageItems[n].tmpValue);
+		// 	}
+		// 	else
+		// 	{
+		// 		this->_displayValue(*(uint32_t*)this->_pages[pageId].pageItems[n].valuePtr);
+		// 	}
+		// 	// this->_displayValue((*(uint32_t*)(this->_pages[page].pageItems[n].valuePtr)));
+		// }
+		// else if (this->_pages[page].pageItems[n].type == DLITEMTYPE::IP)
+		// 	this->_displayIP((*(char*)(this->_pages[page].pageItems[n].valuePtr)));
+	}
+
+	// if (page == DLPAGEENUM::VALUES)
+	// {
+	// 	this->LCD.setCursor(1, 1);
+	// 	this->_displayValue(*(this->_currentSetDisplay));
+
+	// 	this->LCD.setCursor(9, 1);
+	// 	this->_displayValue(*(this->_voltageRead));
+
+	// 	this->LCD.setCursor(9, 2);
+	// 	this->_displayValue(*(this->_currentRead));
+
+	// 	this->LCD.setCursor(9, 3);
+	// 	this->_displayValue(*(this->_powerRead));
+	// }
+	// else if (page == DLPAGEENUM::CONFIG_IP)
+	// {
+	// 	this->LCD.setCursor(5, 0);
+	// 	this->_displayIP(this->_IP);
+
+	// 	this->LCD.setCursor(5, 1);
+	// 	this->_displayIP(this->_NM);
+
+	// 	this->LCD.setCursor(5, 2);
+	// 	this->_displayIP(this->_GW);
+	// }
+}
+
+uint16_t DLDisplay::_getMultiplier()
+{
+	if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_E)
+	{
+		return 1;
+	}
+	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_Z)
+	{
+		return 10;
+	}
+	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_H)
+	{
+		return 100;
+	}
+	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_T)
+	{
+		return 1000;
+	}
+	
+	return 1;
+}
+
+void DLDisplay::Refresh()
+{
+	this->_forceDisplayUpdate = true;
+}
+
+void DLDisplay::_displayValue(uint16_t val)
+{
+	if (val < 10000)
+	{
+		this->LCD.print(' ');
+	}
+
+	this->LCD.print((uint16_t)(val / 1000));
+	this->LCD.print('.');
+
+	val %= 1000;
+
+	if (val < 10)
+	{
+		this->LCD.print("00");
+	}
+	else if (val < 100)
+	{
+		this->LCD.print("0");
+	}
+	
+	this->LCD.print(val);
+}
+
+void DLDisplay::_displayIP(uint8_t *ip)
+{
+	for (uint8_t n = 0; n <= 3; n++)
+	{
+		if (ip[n] < 100)
+			this->LCD.print("0");
+		if (ip[n] < 10)
+			this->LCD.print("0");
+		
+		this->LCD.print(ip[n]);
+
+		if (n < 3)
+			this->LCD.print(".");
+	}
+}
+
 
 void DLDisplay::SetState(DLDisplay_t state)
 {
@@ -661,11 +937,6 @@ void DLDisplay::SetState(DLDisplay_t state)
 	this->_currentState = state;	
 }
 
-DLDisplay::DLDisplay_t DLDisplay::GetState()
-{
-	return this->_currentState;
-}
-
 // void DLDisplay::_drawValuesScaffold()
 // {
 // 	this->LCD.setCursor(0, 0);
@@ -704,186 +975,3 @@ DLDisplay::DLDisplay_t DLDisplay::GetState()
 // 	this->LCD.print("> Exit              "); this->LCD.setCursor(0, 3);
 // 	this->LCD.print("                    ");
 // }
-
-void DLDisplay::_drawPage(DLPageEnum_t page)
-{
-	// if (page == DLPAGEENUM::VALUES)
-	// {
-	// 	this->LCD.setCursor(0, 0);
-	// 	this->LCD.print("     SET|   READ|   "); this->LCD.setCursor(0, 1);
-	// 	this->LCD.print("> 0.000A| 0.000V|   "); this->LCD.setCursor(0, 2);
-	// 	this->LCD.print("    Cfg | 0.000A|   "); this->LCD.setCursor(0, 3);
-	// 	this->LCD.print("        | 0.000W|   ");
-
-	// 	this->LCD.setCursor(2, 2);
-	// 	this->LCD.write(byte(3));
-	// }
-	// else if (page == DLPAGEENUM::CONFIG)
-	// {
-	// 	this->LCD.setCursor(0, 0);
-	// 	this->LCD.print("> IP Configuration  "); this->LCD.setCursor(0, 1);
-	// 	this->LCD.print("  WiFi Configuration"); this->LCD.setCursor(0, 2);
-	// 	this->LCD.print("  Exit              "); this->LCD.setCursor(0, 3);
-	// 	this->LCD.print("                    ");
-	// }
-	// else if (page == DLPAGEENUM::CONFIG_IP)
-	// {
-	// 	this->LCD.setCursor(0, 0);
-	// 	this->LCD.print("> IP:               "); this->LCD.setCursor(0, 1);
-	// 	this->LCD.print("  SM:               "); this->LCD.setCursor(0, 2);
-	// 	this->LCD.print("  GW:               "); this->LCD.setCursor(0, 3);
-	// 	this->LCD.print("  Exit              ");
-	// }
-	// else if (page == DLPAGEENUM::CONFIG_WIFI)
-	// {
-	// 	this->LCD.setCursor(0, 0);
-	// 	this->LCD.print("  SSID:             "); this->LCD.setCursor(0, 1);
-	// 	this->LCD.print("  PSK:              "); this->LCD.setCursor(0, 2);
-	// 	this->LCD.print("> Exit              "); this->LCD.setCursor(0, 3);
-	// 	this->LCD.print("                    ");
-	// }
-
-	// for (uint8_t n = 0; n <= this->_pages[page].pageItemCount; n++)
-	// {
-	// 	this->LCD.setCursor(this->_pages[page].pageItems[n].col, this->_pages[page].pageItems[n].row);
-	// 	if (this->_pages[page].pageItems[n].type == DLITEMTYPE::INTEGER)
-	// 		this->_displayValue((*(uint32_t*)(this->_pages[page].pageItems[n].valuePtr)));
-	// 	else if (this->_pages[page].pageItems[n].type == DLITEMTYPE::STRING)
-	// 		this->LCD.print((*(char*)(this->_pages[page].pageItems[n].text)));
-	// }
-
-	// Serial.println("print scaffold");
-
-	this->LCD.setCursor(0, 0);
-	for (uint8_t n = 0; n <= 3; n++)
-	{
-		this->LCD.setCursor(0, n);
-		this->LCD.print(*this->_pages[page].scaffoldLines[n]);
-	}
-}
-
-void DLDisplay::_drawPageValues(DLPageEnum_t page)
-{
-	for (uint8_t n = 0; n < this->_pages[page].pageItemCount; n++)
-	{
-		if (this->_pages[page].selectedItem == &this->_pages[page].pageItems[n])
-		{
-			this->LCD.setCursor(0, this->_pages[page].pageItems[n].row);
-			this->LCD.print(">");
-			// Serial.print("bla");
-		}
-		// Serial.println(this->_pages[page].pageItems[n].col);
-		// Serial.println(this->_pages[page].pageItems[n].row);
-		this->LCD.setCursor(this->_pages[page].pageItems[n].col, this->_pages[page].pageItems[n].row);
-
-		if (this->_pages[page].pageItems[n].type == DLITEMTYPE::UINT16)
-		{
-			this->_displayValue(*(uint16_t*)this->_pages[page].pageItems[n].valuePtr);
-
-			// this->_displayValue((*(uint32_t*)(this->_pages[page].pageItems[n].valuePtr)));
-		}
-		else if (this->_pages[page].pageItems[n].type == DLITEMTYPE::UINT32)
-		{
-			this->_displayValue(*(uint32_t*)this->_pages[page].pageItems[n].valuePtr);
-			// this->_displayValue((*(uint32_t*)(this->_pages[page].pageItems[n].valuePtr)));
-		}
-		else if (this->_pages[page].pageItems[n].type == DLITEMTYPE::STRING)
-		{
-			// Serial.println(this->_pages[page].pageItems[n].text);
-			this->LCD.print(this->_pages[page].pageItems[n].text);
-			// this->LCD.print((*this->_pages[page].pageItems[n].text));
-			// this->LCD.print((*(char*)(this->_pages[page].pageItems[n].text)));
-		}
-		// else if (this->_pages[page].pageItems[n].type == DLITEMTYPE::IP)
-		// 	this->_displayIP((*(char*)(this->_pages[page].pageItems[n].valuePtr)));
-	}
-
-	// if (page == DLPAGEENUM::VALUES)
-	// {
-	// 	this->LCD.setCursor(1, 1);
-	// 	this->_displayValue(*(this->_currentSetDisplay));
-
-	// 	this->LCD.setCursor(9, 1);
-	// 	this->_displayValue(*(this->_voltageRead));
-
-	// 	this->LCD.setCursor(9, 2);
-	// 	this->_displayValue(*(this->_currentRead));
-
-	// 	this->LCD.setCursor(9, 3);
-	// 	this->_displayValue(*(this->_powerRead));
-	// }
-	// else if (page == DLPAGEENUM::CONFIG_IP)
-	// {
-	// 	this->LCD.setCursor(5, 0);
-	// 	this->_displayIP(this->_IP);
-
-	// 	this->LCD.setCursor(5, 1);
-	// 	this->_displayIP(this->_NM);
-
-	// 	this->LCD.setCursor(5, 2);
-	// 	this->_displayIP(this->_GW);
-	// }
-}
-
-uint16_t DLDisplay::_getMultiplier()
-{
-	if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_E)
-	{
-		return 1;
-	}
-	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_Z)
-	{
-		return 10;
-	}
-	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_H)
-	{
-		return 100;
-	}
-	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_T)
-	{
-		return 1000;
-	}
-	
-	return 1;
-}
-
-void DLDisplay::Refresh()
-{
-	this->_forceDisplayUpdate = true;
-}
-
-void DLDisplay::_displayValue(uint32_t val)
-{
-	if (val < 10000)
-		this->LCD.print(' ');
-
-	this->LCD.print((int)(val / 1000));
-	this->LCD.print('.');
-
-	val %= 1000;
-
-	if (val < 10)
-		this->LCD.print("00");
-	else if (val < 100)
-		this->LCD.print("0");
-	
-	this->LCD.print(val);
-
-	// LOG("XXX = %u\r\n", val);	
-}
-
-void DLDisplay::_displayIP(uint8_t *ip)
-{
-	for (uint8_t n = 0; n <= 3; n++)
-	{
-		if (ip[n] < 100)
-			this->LCD.print("0");
-		if (ip[n] < 10)
-			this->LCD.print("0");
-		
-		this->LCD.print(ip[n]);
-
-		if (n < 3)
-			this->LCD.print(".");
-	}
-}

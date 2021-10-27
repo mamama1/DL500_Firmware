@@ -43,14 +43,14 @@ class DLDisplay
 			CONFIG_WIFI_EXIT =			0x50
 		} DLDisplay_t;
 
-		typedef enum DLPAGEENUM : uint8_t
-		{
-			VALUES =					0x00,
-			CONFIG =					0x01,
-			CONFIG_IP =					0x02,
-			CONFIG_WIFI =				0x03,
-			NOPAGE = 					0xFF
-		} DLPageEnum_t;
+		// typedef enum DLPAGEENUM : uint8_t
+		// {
+		// 	VALUES =					0x00,
+		// 	CONFIG =					0x01,
+		// 	CONFIG_IP =					0x02,
+		// 	CONFIG_WIFI =				0x03,
+		// 	NOPAGE = 					0xFF
+		// } DLPageEnum_t;
 
 		typedef enum DLITEMTYPE : uint8_t
 		{
@@ -69,35 +69,36 @@ class DLDisplay
 			EDIT =						0x01
 		} DLItemAction_t;
 
-		typedef struct
+		typedef struct __attribute((__packed__)) __attribute__((__may_alias__))
 		{
-			DLPageEnum_t	page = DLPAGEENUM::NOPAGE;
-			void			*valuePtr;
-			const char		*text;
-			DLItemType_t	type;
-			uint8_t			row;
-			uint8_t			col;
-			DLPageEnum_t	targetPage = DLPAGEENUM::NOPAGE;
+			// DLPageEnum_t	page = DLPAGEENUM::NOPAGE;
+			void			*valuePtr = NULL;
+			uint32_t		tmpValue = 0;
+			const char		*text = NULL;
+			DLItemType_t	type = DLITEMTYPE::NOTYPE;
+			uint8_t			row = 0;
+			uint8_t			col = 0;
+			uint8_t			targetPageId = 0;
 			DLItemAction_t	action = DLITEMACTION::EDIT;
 			bool			selectable = false;
+			bool			editing = false;
 		} DLPageItem_t;
 
-		typedef struct
+		typedef struct __attribute((__packed__)) __attribute__((__may_alias__))
 		{
-			const char		**scaffoldLines[21];
-			DLPageItem_t	*pageItems;
-			// DLPageItem_t	*pageItemsNew;
-			uint8_t			pageItemCount;
-			DLPageItem_t	*selectedItem;
+			const char		**scaffoldLines[4] = { NULL, };
+			DLPageItem_t	*pageItems = NULL;
+			uint8_t			pageItemCount = 0;
+			DLPageItem_t	*selectedItem = NULL;
 		} DLPage_t;
 		
 		DLDisplay();
 
-		void Init(DLDisplay_t initialState, uint16_t *currentSet, uint16_t *currentSetDisplay, uint16_t *currentRead, uint16_t *voltageRead, uint32_t *powerRead, uint16_t displayUpdateIntervalMillis);
+		void Init(DLDisplay_t initialState, uint16_t *currentSet, uint16_t *currentSetDisplay, uint16_t *currentRead, uint16_t *voltageRead, uint16_t *powerRead, uint16_t displayUpdateIntervalMillis);
 		void InitNetworkVals(uint8_t *iparray, uint8_t *nmarray, uint8_t *gwarray, char *ssid, char *psk);
 		void Process();
 		void SetState(DLDisplay_t state);
-		void SetPage(DLPageEnum_t page);
+		
 		DLDisplay_t GetState();
 		void Refresh();
 		void ButtonPressed();
@@ -109,10 +110,11 @@ class DLDisplay
 		void OnEncoderDown(void (*func)(uint16_t newVal));
 		void OnEncoderConfirmValue(void (*func)(uint16_t newVal));
 
-		DLPage_t* AddPage(const char *scaffoldLine1, const char *scaffoldLine2, const char *scaffoldLine3, const char *scaffoldLine4);
-		DLPageItem_t* AddPageItem(DLPage_t *page, uint16_t *uint16ValPtr, uint8_t row, uint8_t col, bool editable, bool selected = false);
-		DLPageItem_t* AddPageItem(DLPage_t *page, uint32_t *uint32ValPtr, uint8_t row, uint8_t col, bool editable, bool selected = false);
-		DLPageItem_t* AddPageItem(DLPage_t *page, const char *text, uint8_t row, uint8_t col, DLPageEnum_t targetPage, bool selectable, bool selected = false);
+		uint8_t AddPage(const char *scaffoldLine1, const char *scaffoldLine2, const char *scaffoldLine3, const char *scaffoldLine4);
+		DLPageItem_t* AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint8_t row, uint8_t col, bool editable, bool selected = false);
+		// DLPageItem_t* AddPageItem(uint8_t pageId, uint32_t *uint32ValPtr, uint8_t row, uint8_t col, bool editable, bool selected = false);
+		DLPageItem_t* AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t targetPageId, bool selectable, bool selected = false);
+		void SetPage(uint8_t pageId);
 
 	private:
 
@@ -120,13 +122,15 @@ class DLDisplay
 		Encoder enc;//(ENC_B_PIN, ENC_A_PIN);
 
 		DLDisplay_t _currentState = DL_DISPLAY::NONE1;
-		DLPageEnum_t _currentPage = DLPAGEENUM::NOPAGE;
+		uint8_t _currentPage = 10;
+
+		// DLPage_t *_currentPagePtr = NULL;
 
 		uint16_t *_currentSet;
 		uint16_t *_currentSetDisplay;
 		uint16_t *_currentRead;
 		uint16_t *_voltageRead;
-		uint32_t *_powerRead;
+		uint16_t *_powerRead;
 
 		uint8_t *_IP;
 		uint8_t *_NM;
@@ -140,11 +144,11 @@ class DLDisplay
 		// void _drawSettingsIPScaffold();
 		// void _drawSettingsWIFIScaffold();
 
-		void _drawPage(DLPageEnum_t page);
+		void _drawPage(uint8_t pageId);
 
-		void _drawPageValues(DLPageEnum_t page);
+		void _drawPageValues(uint8_t pageId);
 
-		void _displayValue(uint32_t val);
+		void _displayValue(uint16_t val);
 		void _displayIP(uint8_t *ip);
 
 		void _processDisplay();
@@ -159,8 +163,8 @@ class DLDisplay
 		DLPage_t *_pages = NULL;
 		uint8_t _pageCount = 0;
 
-		DLPageItem_t *_pageItems = NULL;
-		uint8_t _pageItemCount = 0;
+		// DLPageItem_t *_pageItems = NULL;
+		// uint8_t _pageItemCount = 0;
 
 		uint8_t _cursorBlinkPosX = 0;
 		uint8_t _cursorBlinkPosY = 0;
