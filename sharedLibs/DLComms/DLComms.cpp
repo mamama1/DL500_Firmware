@@ -30,12 +30,12 @@ void DLComms::sendData(uint16_t currentSet, uint16_t currentRead, uint16_t volta
 	sendPacket->packetNumber = 0;
 	sendPacket->crc = 0;
 	
-	auto *const sendData = reinterpret_cast<DLData_t *const>(sendPacket->dataBuffer);
+	auto *const sendDataPtr = reinterpret_cast<DLData_t *const>(sendPacket->dataBuffer);
 
-	sendData->currentSet = currentSet;
-	sendData->currentRead = currentRead;
-	sendData->voltageRead = voltageRead;
-	sendData->powerRead = powerRead;
+	sendDataPtr->currentSet = currentSet;
+	sendDataPtr->currentRead = currentRead;
+	sendDataPtr->voltageRead = voltageRead;
+	sendDataPtr->powerRead = powerRead;
 
 	uint32_t checksum = CRC32::calculate(this->DataTXbuffer, sizeof(this->DataTXbuffer));
 
