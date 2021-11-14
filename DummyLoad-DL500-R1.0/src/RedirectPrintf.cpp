@@ -8,7 +8,7 @@
 		uint32_t CurrentLOGMillis;
 	#endif
 
-	HardwareSerial *DebugSerial;
+	Serial_ *DebugSerial;
 
 	#if defined(ARDUINO_ARCH_AVR)
 
@@ -20,7 +20,7 @@
 
 	#endif
 
-	bool PrintfBegin(HardwareSerial *serial)
+	bool PrintfBegin(Serial_ *serial)
 	{
 		if (serial == NULL)
 			return false;
@@ -43,7 +43,7 @@
 
 #else
 
-	bool PrintfBegin(HardwareSerial *serial)
+	bool PrintfBegin(Serial_ *serial)
 	{
 		delay(1);
 		return false;

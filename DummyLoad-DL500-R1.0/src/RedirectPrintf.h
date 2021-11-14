@@ -34,8 +34,8 @@
 	#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 	#define __FILENAME_NOCHECK__ (strrchr(__FILE__, '\\') + 1)
 
-	extern HardwareSerial *DebugSerial;
-	bool PrintfBegin(HardwareSerial *serial);
+	extern Serial_ *DebugSerial;
+	bool PrintfBegin(Serial_ *serial);
 	
 	#if (REDIRECT_PRINTF == REDIRECT_PRINTF_FEATURELEVEL_MILLIS)
 
@@ -78,7 +78,7 @@
 
 #else
 
-	bool PrintfBegin(HardwareSerial *serial);
+	bool PrintfBegin(Serial_ *serial);
 	
 	#define printf(fmt, ...) {}
 	#define printf_P(fmt, ...) {}

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <LiquidCrystal.h>
 #include <Encoder.h>
+#include <RedirectPrintf.h>
 
 #include <config.h>
 #include <pins.h>
@@ -69,12 +70,13 @@ class DLDisplay
 			EDIT =						0x01
 		} DLItemAction_t;
 
-		typedef struct __attribute((__packed__)) __attribute__((__may_alias__))
+		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
 		{
 			// DLPageEnum_t	page = DLPAGEENUM::NOPAGE;
+			uint8_t			index = 0;
 			void			*valuePtr = NULL;
-			uint32_t		tmpValue = 0;
-			const char		*text = NULL;
+			uint16_t		tmpValue = 0;
+			// const char		*text = NULL;
 			DLItemType_t	type = DLITEMTYPE::NOTYPE;
 			uint8_t			row = 0;
 			uint8_t			col = 0;
@@ -84,12 +86,13 @@ class DLDisplay
 			bool			editing = false;
 		} DLPageItem_t;
 
-		typedef struct __attribute((__packed__)) __attribute__((__may_alias__))
+		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
 		{
-			const char		**scaffoldLines[4] = { NULL, };
-			DLPageItem_t	*pageItems = NULL;
+			uint8_t			index = 0;
+			char			scaffoldLines[4][21] = { 0, };
+			DLPageItem_t	pageItems[8];
 			uint8_t			pageItemCount = 0;
-			DLPageItem_t	*selectedItem = NULL;
+			uint8_t			selectedItemIndex = 0;
 		} DLPage_t;
 		
 		DLDisplay();
@@ -160,8 +163,13 @@ class DLDisplay
 		// DLPageItem_t ConfigPage[3];
 		// DLPageItem_t ConfigIpPage[4];
 
-		DLPage_t *_pages = NULL;
+		DLPage_t _pages[3];// = NULL;
+		// DLPage_t *_pageItems = NULL;
+		
 		uint8_t _pageCount = 0;
+
+		uint8_t _findNextSelectableItem();
+		uint8_t _findPrevSelectableItem();
 
 		// DLPageItem_t *_pageItems = NULL;
 		// uint8_t _pageItemCount = 0;

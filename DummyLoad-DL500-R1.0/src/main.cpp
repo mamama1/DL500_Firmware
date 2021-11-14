@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <RedirectPrintf.h>
 // #include <EEPROM.h>
 #include <pins.h>
 #include <config.h>
@@ -62,11 +63,11 @@ void processUART();
 void setup()
 {
 	// initDAC(VOLTAGE_LOWER_LIMIT, CURRENT_UPPER_LIMIT);
-	
-	Serial.begin(115200);
+	PrintfBegin(&Serial);
+	// Serial.begin(115200);
 	Serial1.begin(28800, SERIAL_8N1);
 
-	// while(!Serial.available()){};
+	while(!Serial.available()){};
 	// Serial.println("Hello world");
 
 	initPins();
@@ -110,12 +111,12 @@ void setup()
 
 	ButtonEncoder.Begin(NULL, 	 BDButtonState::PRESSED | BDButtonState::HOLD);
 	ButtonEncoder.OnButtonPress([](void *, uint8_t buttonID) {
-		Serial.println("ButtonEncoder_OnButtonPress!");
+		// Serial.println("ButtonEncoder_OnButtonPress!");
 		dldisplay.ButtonPressed();
 	});
 
 	ButtonEncoder.OnButtonHold([](void *, uint8_t buttonID) {
-		Serial.println("ButtonEncoder_OnButtonHold!");
+		// Serial.println("ButtonEncoder_OnButtonHold!");
 		dldisplay.ButtonHold();
 	});
 
@@ -123,6 +124,7 @@ void setup()
 						"  0.000A| 0.000V|   ",
 						"        | 0.000A|   ",
 						"        | 0.000W|   ");
+
 	// dldisplay.AddPage(	"     SET|   READ|   ",
 	// 					"       A|      V|   ",
 	// 					"        |      A|   ",
@@ -132,6 +134,19 @@ void setup()
 	dldisplay.AddPageItem(0, &voltsReadVal, 1, 9, false);
 	dldisplay.AddPageItem(0, &milliAmpsReadVal, 2, 9, false);
 	dldisplay.AddPageItem(0, &powerReadVal, 3, 9, false);
+
+	dldisplay.AddPage(	"                    ",
+						"                    ",
+						"                    ",
+						"                    ");
+	// dldisplay.AddPage(	"     SET|   READ|   ",
+	// 					"       A|      V|   ",
+	// 					"        |      A|   ",
+	// 					"        |      W|   ");
+	dldisplay.AddPageItem(1, "IP Configuration", 0, 1, 2, true, true);
+	dldisplay.AddPageItem(1, "WiFi Configuration", 1, 1, 3, true, false);
+	dldisplay.AddPageItem(1, "Exit", 2, 1, 0, true, false);
+	
 
 	dldisplay.SetPage(0);
 
@@ -154,9 +169,11 @@ void loop()
 
 	if (millis() - heartbeatMillis > 600)
 	{
-		Serial.println("Heartbeat");
-		
 		heartbeatMillis = millis();
+		LOG("Heartbeat\r\n");
+		delay(5);
+		
+		
 	}
 }
 
