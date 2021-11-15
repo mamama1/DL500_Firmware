@@ -67,7 +67,8 @@ class DLDisplay
 		typedef enum DLITEMACTION : uint8_t
 		{
 			JUMP =						0x00,
-			EDIT =						0x01
+			EDIT =						0x01,
+			NONE =						0xFF
 		} DLItemAction_t;
 
 		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
@@ -75,14 +76,21 @@ class DLDisplay
 			// DLPageEnum_t	page = DLPAGEENUM::NOPAGE;
 			uint8_t			index = 0;
 			void			*valuePtr = NULL;
+			void			*maxValPtr = NULL;
+			void			*minValPtr = NULL;
 			uint16_t		tmpValue = 0;
-			// const char		*text = NULL;
+			uint16_t		multiplicatorBase = 0;
+			uint16_t		multiplicatorPower = 0;
+			uint16_t		multiplicatorPowerMax = 0;
 			DLItemType_t	type = DLITEMTYPE::NOTYPE;
 			uint8_t			row = 0;
 			uint8_t			col = 0;
+			uint8_t			selectorColOffset = 0;
+			uint8_t			cursorColOffset = 0;
 			uint8_t			targetPageId = 0;
-			DLItemAction_t	action = DLITEMACTION::EDIT;
+			DLItemAction_t	action = DLITEMACTION::NONE;
 			bool			selectable = false;
+			bool			editable = false;
 			bool			editing = false;
 		} DLPageItem_t;
 
@@ -90,10 +98,22 @@ class DLDisplay
 		{
 			uint8_t			index = 0;
 			char			scaffoldLines[4][21] = { 0, };
-			DLPageItem_t	pageItems[8];
+			DLPageItem_t	*pageItems = NULL;
 			uint8_t			pageItemCount = 0;
 			uint8_t			selectedItemIndex = 0;
 		} DLPage_t;
+
+		typedef struct
+		{
+			uint16_t		*valuePtr = NULL;
+			uint16_t		*maxValPtr = NULL;
+			uint16_t		*minValPtr = NULL;
+			uint16_t 		tmpValue = 0;
+			uint16_t		multiplicatorBase = 0;
+			uint16_t		multiplicatorPower = 0;
+			uint16_t		multiplicatorPowerMax = 0;
+		} DLUInt16Data_t;
+		
 		
 		DLDisplay();
 
@@ -114,9 +134,13 @@ class DLDisplay
 		void OnEncoderConfirmValue(void (*func)(uint16_t newVal));
 
 		uint8_t AddPage(const char *scaffoldLine1, const char *scaffoldLine2, const char *scaffoldLine3, const char *scaffoldLine4);
-		DLPageItem_t* AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint8_t row, uint8_t col, bool editable, bool selected = false);
+		DLPageItem_t* AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint16_t *uint16MinValPtr, uint16_t *uint16MaxValPtr, uint16_t multiplicatorBase, uint16_t multiplicatorPowerMax, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selectable, bool selected = false);
+		DLPageItem_t* AddPageItem(uint8_t pageId, uint8_t *IPArrayPtr, uint8_t row, uint8_t col);
+		// DLPageItem_t* AddPageItem(uint8_t pageId, uint8_t *ipOct1Ptr, uint8_t *ipOct2Ptr, uint8_t *ipOct3Ptr, uint8_t *ipOct4Ptr, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selected = false);
 		// DLPageItem_t* AddPageItem(uint8_t pageId, uint32_t *uint32ValPtr, uint8_t row, uint8_t col, bool editable, bool selected = false);
-		DLPageItem_t* AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t targetPageId, bool selectable, bool selected = false);
+		DLPageItem_t* AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected = false);
+
+		
 		void SetPage(uint8_t pageId);
 
 	private:
@@ -151,6 +175,8 @@ class DLDisplay
 
 		void _drawPageValues(uint8_t pageId);
 
+		void _setCursorPosition();
+
 		void _displayValue(uint16_t val);
 		void _displayIP(uint8_t *ip);
 
@@ -163,11 +189,12 @@ class DLDisplay
 		// DLPageItem_t ConfigPage[3];
 		// DLPageItem_t ConfigIpPage[4];
 
-		DLPage_t _pages[3];// = NULL;
+		DLPage_t *_pages = NULL;
 		// DLPage_t *_pageItems = NULL;
 		
 		uint8_t _pageCount = 0;
 
+		uint8_t _findFirstSelectableItem();
 		uint8_t _findNextSelectableItem();
 		uint8_t _findPrevSelectableItem();
 
@@ -187,7 +214,8 @@ class DLDisplay
 
 		// Encoder stuff
 		//
-		long _encoderOldPosition = -999;
+		long _encoderOldPosition = 0;
+		long _encoderNewPosition = 0;
 
 		void (*_EncoderUpFunction)(uint16_t newVal);
 		void (*_EncoderDownFunction)(uint16_t newVal);
