@@ -123,37 +123,37 @@ void setup()
 		dldisplay.ButtonHold();
 	});
 
-	dldisplay.AddPage(	"     SET|    READ|  ",
-						"  0.000A|  0.000V|  ",
-						"        |  0.000A|  ",
-						"        |  0.000W|  ");
+	dldisplay.AddPage(	"     SET|    READ|",
+						"  0.000A|  0.000V|",
+						"        |  0.000A|",
+						"        |  0.000W|");
 	dldisplay.AddPageItem(0, &milliAmpsSetVal, &milliAmpsMinVal, &milliAmpsMaxVal, 10, 2, 1, 1, 1, true, true, true);
 	dldisplay.AddPageItem(0, "Cfg", 2, 4, 4, 1, true, false);
 	dldisplay.AddPageItem(0, &voltsReadVal, NULL, NULL, 0, 0, 1, 10, 1, false, false);
 	dldisplay.AddPageItem(0, &milliAmpsReadVal, NULL, NULL, 0, 0, 2, 10, 1, false, false);
 	dldisplay.AddPageItem(0, &powerReadVal, NULL, NULL, 0, 0, 3, 10, 1, false, false);
 
-	dldisplay.AddPage(	"                    ",
-						"                    ",
-						"                    ",
-						"                    ");
+	dldisplay.AddPage(	"",
+						"",
+						"",
+						"");
 	dldisplay.AddPageItem(1, "IP Configuration", 0, 1, 1, 2, true, true);
 	dldisplay.AddPageItem(1, "WiFi Configuration", 1, 1, 1, 3, true, false);
 	dldisplay.AddPageItem(1, "Exit", 2, 1, 1, 0, true, false);
 	
-	dldisplay.AddPage(	" IP:                ",
-						" NM:                ",
-						" GW:                ",
-						"                    ");
+	dldisplay.AddPage(	" IP:",
+						" NM:",
+						" GW:",
+						"");
 	dldisplay.AddPageItem(2, IP, 0, 5);
 	dldisplay.AddPageItem(2, NM, 1, 5);
 	dldisplay.AddPageItem(2, GW, 2, 5);
 	dldisplay.AddPageItem(2, "Exit", 3, 1, 1, 1, true, true);
 
-	dldisplay.AddPage(	" SSID:              ",
-						" PSK:               ",
-						" State:             ",
-						"                    ");
+	dldisplay.AddPage(	" SSID:",
+						" PSK:",
+						" State:",
+						"");
 
 	dldisplay.AddPageItem(3, SSID, 0, 7, 1, false, false);
 	dldisplay.AddPageItem(3, WPA2PSK, 1, 6, 1, false, false);

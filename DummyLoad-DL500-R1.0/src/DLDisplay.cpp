@@ -98,11 +98,23 @@ uint8_t DLDisplay::AddPage(const char *scaffoldLine1, const char *scaffoldLine2,
 	this->_checkNullPtr(this->_pages);
 
 	this->_pages[currentPageIndex].index = currentPageIndex;
+
+	this->_pages[currentPageIndex].scaffoldLines[0] = (char *)malloc(strnlen(scaffoldLine1, 20) + 1);
+	this->_checkNullPtr(this->_pages[currentPageIndex].scaffoldLines[0]);
+
+	this->_pages[currentPageIndex].scaffoldLines[1] = (char *)malloc(strnlen(scaffoldLine2, 20) + 1);
+	this->_checkNullPtr(this->_pages[currentPageIndex].scaffoldLines[1]);
+
+	this->_pages[currentPageIndex].scaffoldLines[2] = (char *)malloc(strnlen(scaffoldLine3, 20) + 1);
+	this->_checkNullPtr(this->_pages[currentPageIndex].scaffoldLines[2]);
+
+	this->_pages[currentPageIndex].scaffoldLines[3] = (char *)malloc(strnlen(scaffoldLine4, 20) + 1);
+	this->_checkNullPtr(this->_pages[currentPageIndex].scaffoldLines[3]);
 	
-	strncpy(_pages[currentPageIndex].scaffoldLines[0], scaffoldLine1, sizeof(_pages[currentPageIndex].scaffoldLines[0]));
-	strncpy(_pages[currentPageIndex].scaffoldLines[1], scaffoldLine2, sizeof(_pages[currentPageIndex].scaffoldLines[1]));
-	strncpy(_pages[currentPageIndex].scaffoldLines[2], scaffoldLine3, sizeof(_pages[currentPageIndex].scaffoldLines[2]));
-	strncpy(_pages[currentPageIndex].scaffoldLines[3], scaffoldLine4, sizeof(_pages[currentPageIndex].scaffoldLines[3]));
+	strncpy(this->_pages[currentPageIndex].scaffoldLines[0], scaffoldLine1, strnlen(scaffoldLine1, 20) + 1);
+	strncpy(this->_pages[currentPageIndex].scaffoldLines[1], scaffoldLine2, strnlen(scaffoldLine2, 20) + 1);
+	strncpy(this->_pages[currentPageIndex].scaffoldLines[2], scaffoldLine3, strnlen(scaffoldLine3, 20) + 1);
+	strncpy(this->_pages[currentPageIndex].scaffoldLines[3], scaffoldLine4, strnlen(scaffoldLine4, 20) + 1);
 		
 	this->_pages[currentPageIndex].pageItems = NULL;
 	this->_pages[currentPageIndex].pageItemCount = 0;
@@ -123,14 +135,26 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint16_t *uint16
 	this->_pages[pageId].pageItems = (DLPageItem_t*)realloc(this->_pages[pageId].pageItems, this->_pages[pageId].pageItemCount * sizeof(*this->_pages[pageId].pageItems));
 	this->_checkNullPtr(this->_pages[pageId].pageItems);
 
+	this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr = (DLUInt16Data_t*)malloc(sizeof(DLUInt16Data_t));
+
+	auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr);
+
+	uint16DataStruct->valuePtr = uint16ValPtr;
+	uint16DataStruct->tmpValue = 0;
+	uint16DataStruct->minValPtr = uint16MinValPtr;
+	uint16DataStruct->maxValPtr = uint16MaxValPtr;
+	uint16DataStruct->multiplicatorBase = multiplicatorBase;
+	uint16DataStruct->multiplicatorPowerMax = multiplicatorPowerMax;
+	uint16DataStruct->multiplicatorPower = 0;
+	
 
 	this->_pages[pageId].pageItems[currentPageItemIndex].index = currentPageItemIndex;
-	this->_pages[pageId].pageItems[currentPageItemIndex].valuePtr = uint16ValPtr;
-	this->_pages[pageId].pageItems[currentPageItemIndex].minValPtr = uint16MinValPtr;
-	this->_pages[pageId].pageItems[currentPageItemIndex].maxValPtr = uint16MaxValPtr;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorBase = multiplicatorBase;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPowerMax = multiplicatorPowerMax;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPower = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].valuePtr = uint16ValPtr;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].minValPtr = uint16MinValPtr;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].maxValPtr = uint16MaxValPtr;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorBase = multiplicatorBase;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPowerMax = multiplicatorPowerMax;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPower = 0;
 	this->_pages[pageId].pageItems[currentPageItemIndex].row = row;
 	this->_pages[pageId].pageItems[currentPageItemIndex].col = col;
 	this->_pages[pageId].pageItems[currentPageItemIndex].selectorColOffset = selectorColOffset;
@@ -141,11 +165,12 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint16_t *uint16
 	this->_pages[pageId].pageItems[currentPageItemIndex].cursorColOffset = 5;
 	this->_pages[pageId].pageItems[currentPageItemIndex].editing = false;
 	this->_pages[pageId].pageItems[currentPageItemIndex].targetPageId = 0;
-	this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = 0;
 
 	if (editable)
 	{
-		this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = *uint16ValPtr;
+		uint16DataStruct->tmpValue = *uint16ValPtr;
+		// this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = *uint16ValPtr;
 	}
 
 	if (selected)
@@ -170,12 +195,12 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint8_t *IPArray
 
 
 	this->_pages[pageId].pageItems[currentPageItemIndex].index = currentPageItemIndex;
-	this->_pages[pageId].pageItems[currentPageItemIndex].valuePtr = IPArrayPtr;
-	this->_pages[pageId].pageItems[currentPageItemIndex].minValPtr = NULL;
-	this->_pages[pageId].pageItems[currentPageItemIndex].maxValPtr = NULL;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorBase = 0;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPowerMax = 0;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPower = 0;
+	this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr = IPArrayPtr;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].minValPtr = NULL;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].maxValPtr = NULL;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorBase = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPowerMax = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPower = 0;
 	this->_pages[pageId].pageItems[currentPageItemIndex].row = row;
 	this->_pages[pageId].pageItems[currentPageItemIndex].col = col;
 	this->_pages[pageId].pageItems[currentPageItemIndex].selectorColOffset = 0;
@@ -186,7 +211,7 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint8_t *IPArray
 	this->_pages[pageId].pageItems[currentPageItemIndex].cursorColOffset = 0;
 	this->_pages[pageId].pageItems[currentPageItemIndex].editing = false;
 	this->_pages[pageId].pageItems[currentPageItemIndex].targetPageId = 0;
-	this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = 0;
 
 	return &this->_pages[pageId].pageItems[currentPageItemIndex];
 }
@@ -207,15 +232,15 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, const char *text
 
 	this->_pages[pageId].pageItems[currentPageItemIndex].index = currentPageItemIndex;
 	
-	this->_pages[pageId].pageItems[currentPageItemIndex].valuePtr = (char *)malloc(strlen(text) + 1);
-	this->_checkNullPtr(this->_pages[pageId].pageItems[currentPageItemIndex].valuePtr);
-	strncpy((char *)this->_pages[pageId].pageItems[currentPageItemIndex].valuePtr, text, strlen(text) + 1);
+	this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr = (char *)malloc(strlen(text) + 1);
+	this->_checkNullPtr(this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr);
+	strncpy((char *)this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr, text, strlen(text) + 1);
 
-	this->_pages[pageId].pageItems[currentPageItemIndex].minValPtr = NULL;
-	this->_pages[pageId].pageItems[currentPageItemIndex].maxValPtr = NULL;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorBase = 0;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPowerMax = 0;
-	this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPower = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].minValPtr = NULL;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].maxValPtr = NULL;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorBase = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPowerMax = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPower = 0;
 	this->_pages[pageId].pageItems[currentPageItemIndex].row = row;
 	this->_pages[pageId].pageItems[currentPageItemIndex].col = col;
 	this->_pages[pageId].pageItems[currentPageItemIndex].selectorColOffset = selectorColOffset;
@@ -226,7 +251,7 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, const char *text
 	this->_pages[pageId].pageItems[currentPageItemIndex].type = DLITEMTYPE::STRING;
 	this->_pages[pageId].pageItems[currentPageItemIndex].editing = false;
 	this->_pages[pageId].pageItems[currentPageItemIndex].cursorColOffset = 0;
-	this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = 0;
 
 	if (selected)
 	{
@@ -414,10 +439,12 @@ void DLDisplay::_processEncoder()
 				{
 					if (this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].type == DLITEMTYPE::UINT16)
 					{
-						if (this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].tmpValue <
-							*(uint16_t*)this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].maxValPtr)
+						auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valueStructPtr);
+
+						if (uint16DataStruct->tmpValue <
+							*uint16DataStruct->maxValPtr)
 							{
-								this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].tmpValue++;
+								uint16DataStruct->tmpValue++;
 								this->Refresh();
 							}
 					}
@@ -501,10 +528,12 @@ void DLDisplay::_processEncoder()
 				{
 					if (this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].type == DLITEMTYPE::UINT16)
 					{
-						if (this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].tmpValue >
-							*(uint16_t*)this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].minValPtr)
+						auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valueStructPtr);
+
+						if (uint16DataStruct->tmpValue >
+							*uint16DataStruct->minValPtr)
 							{
-								this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].tmpValue--;
+								uint16DataStruct->tmpValue--;
 								this->Refresh();
 							}
 					}
@@ -705,8 +734,10 @@ void DLDisplay::ButtonHold()
 
 		if (this->_EncoderConfirmValueFunction != NULL)
 		{
-			*(uint16_t*)this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valuePtr = this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].tmpValue;
-			(*_EncoderConfirmValueFunction)(*(uint16_t*)this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valuePtr);
+			auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valueStructPtr);
+
+			*uint16DataStruct->valuePtr = uint16DataStruct->tmpValue;
+			(*_EncoderConfirmValueFunction)(*uint16DataStruct->valuePtr);
 		}
 	}		
 }
@@ -770,6 +801,14 @@ void DLDisplay::_drawPage(uint8_t pageId)
 	{
 		this->LCD.setCursor(0, n);
 		this->LCD.print(this->_pages[pageId].scaffoldLines[n]);
+		// Serial.print(this->_pages[pageId].scaffoldLines[n]);
+		uint8_t trailingSpaces = 20 - strnlen(this->_pages[pageId].scaffoldLines[n], 20);
+		for (uint8_t x = 0; x < trailingSpaces; x++)
+		{
+			// Serial.print("-");
+			this->LCD.print(" ");
+		}
+		// Serial.println();
 	}
 }
 
@@ -795,15 +834,19 @@ void DLDisplay::_drawPageValues(uint8_t pageId)
 
 		if (this->_pages[pageId].pageItems[n].type == DLITEMTYPE::UINT16)
 		{
+			auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[pageId].pageItems[n].valueStructPtr);
+
 			if (this->_pages[pageId].pageItems[n].selectable)
 			{
 				// Serial.println(this->_pages[pageId].pageItems[n].tmpValue);
-				this->_displayValue(this->_pages[pageId].pageItems[n].tmpValue);
+				
+
+				this->_displayValue(uint16DataStruct->tmpValue);
 			}
 			else
 			{
 				// Serial.println(*(uint16_t*)this->_pages[pageId].pageItems[n].valuePtr);
-				this->_displayValue(*(uint16_t*)this->_pages[pageId].pageItems[n].valuePtr);
+				this->_displayValue(*uint16DataStruct->valuePtr);
 				// uint16_t value = *((uint16_t *)this->_pages[pageId].pageItems[n].valuePtr);
 				// this->_displayValue(value);
 
@@ -813,7 +856,7 @@ void DLDisplay::_drawPageValues(uint8_t pageId)
 		else if (this->_pages[pageId].pageItems[n].type == DLITEMTYPE::STRING)
 		{
 			// Serial.println(this->_pages[pageId].pageItems[n].text);
-			this->LCD.print((const char *)this->_pages[pageId].pageItems[n].valuePtr);
+			this->LCD.print((const char *)this->_pages[pageId].pageItems[n].valueStructPtr);
 
 			// this->LCD.print((*this->_pages[page].pageItems[n].text));
 			// this->LCD.print((*(char*)(this->_pages[page].pageItems[n].text)));
@@ -832,7 +875,7 @@ void DLDisplay::_drawPageValues(uint8_t pageId)
 		// }
 		else if (this->_pages[pageId].pageItems[n].type == DLITEMTYPE::IP)
 		{
-			this->_displayIP((uint8_t*)this->_pages[pageId].pageItems[n].valuePtr);
+			this->_displayIP((uint8_t*)this->_pages[pageId].pageItems[n].valueStructPtr);
 		}
 	}
 

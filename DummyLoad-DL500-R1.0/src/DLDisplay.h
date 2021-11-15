@@ -71,17 +71,22 @@ class DLDisplay
 			NONE =						0xFF
 		} DLItemAction_t;
 
+		typedef struct
+		{
+			uint16_t		*valuePtr = NULL;
+			uint16_t		*maxValPtr = NULL;
+			uint16_t		*minValPtr = NULL;
+			uint16_t 		tmpValue = 0;
+			uint16_t		multiplicatorBase = 0;
+			uint16_t		multiplicatorPower = 0;
+			uint16_t		multiplicatorPowerMax = 0;
+		} DLUInt16Data_t;
+
 		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
 		{
 			// DLPageEnum_t	page = DLPAGEENUM::NOPAGE;
 			uint8_t			index = 0;
-			void			*valuePtr = NULL;
-			void			*maxValPtr = NULL;
-			void			*minValPtr = NULL;
-			uint16_t		tmpValue = 0;
-			uint16_t		multiplicatorBase = 0;
-			uint16_t		multiplicatorPower = 0;
-			uint16_t		multiplicatorPowerMax = 0;
+			void			*valueStructPtr = NULL;
 			DLItemType_t	type = DLITEMTYPE::NOTYPE;
 			uint8_t			row = 0;
 			uint8_t			col = 0;
@@ -97,22 +102,14 @@ class DLDisplay
 		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
 		{
 			uint8_t			index = 0;
-			char			scaffoldLines[4][21] = { 0, };
+			// char			scaffoldLines[4][21] = { 0, };
+			char			*scaffoldLines[4] = { NULL, };
 			DLPageItem_t	*pageItems = NULL;
 			uint8_t			pageItemCount = 0;
 			uint8_t			selectedItemIndex = 0;
 		} DLPage_t;
 
-		typedef struct
-		{
-			uint16_t		*valuePtr = NULL;
-			uint16_t		*maxValPtr = NULL;
-			uint16_t		*minValPtr = NULL;
-			uint16_t 		tmpValue = 0;
-			uint16_t		multiplicatorBase = 0;
-			uint16_t		multiplicatorPower = 0;
-			uint16_t		multiplicatorPowerMax = 0;
-		} DLUInt16Data_t;
+		
 		
 		
 		DLDisplay();
