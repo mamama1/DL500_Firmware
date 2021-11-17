@@ -65,7 +65,7 @@ bool psuDAC::decrease(uint16_t multiplier)
 /// @param val mV
 bool psuDAC::set(uint16_t val)
 {
-	if (val >= _minVal && val <= _maxVal)
+	if (val >= _minVal && val <= _maxVal && val != _currentVal)
 	{
 		_currentVal = val;
 		_dacUpdated = true;

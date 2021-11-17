@@ -107,10 +107,7 @@ class DLDisplay
 			DLPageItem_t	*pageItems = NULL;
 			uint8_t			pageItemCount = 0;
 			uint8_t			selectedItemIndex = 0;
-		} DLPage_t;
-
-		
-		
+		} DLPage_t;		
 		
 		DLDisplay();
 
@@ -126,9 +123,9 @@ class DLDisplay
 		void EncoderUp();
 		void EncoderDown();
 
-		void OnEncoderUp(void (*func)(uint16_t newVal));
-		void OnEncoderDown(void (*func)(uint16_t newVal));
-		void OnEncoderConfirmValue(void (*func)(uint16_t newVal));
+		// void OnEncoderUp(void (*func)(uint16_t newVal));
+		// void OnEncoderDown(void (*func)(uint16_t newVal));
+		void OnEncoderConfirmValue(void (*func)(uint16_t *newVal));
 
 		uint8_t AddPage(const char *scaffoldLine1, const char *scaffoldLine2, const char *scaffoldLine3, const char *scaffoldLine4);
 		DLPageItem_t* AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint16_t *uint16MinValPtr, uint16_t *uint16MaxValPtr, uint16_t multiplicatorBase, uint16_t multiplicatorPowerMax, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selectable, bool selected = false);
@@ -202,6 +199,8 @@ class DLDisplay
 		uint8_t _cursorBlinkPosY = 0;
 		bool _cursorBlink = false;
 
+		uint16_t _iPow(uint16_t base, uint16_t power);
+
 		uint32_t _lastDisplayUpdateMillis = 0;
 		uint16_t _displayUpdateIntervalMillis = 0;
 
@@ -216,6 +215,6 @@ class DLDisplay
 
 		void (*_EncoderUpFunction)(uint16_t newVal);
 		void (*_EncoderDownFunction)(uint16_t newVal);
-		void (*_EncoderConfirmValueFunction)(uint16_t newVal);
+		void (*_EncoderConfirmValueFunction)(uint16_t *newVal);
 
 };

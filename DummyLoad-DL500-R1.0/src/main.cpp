@@ -34,6 +34,15 @@ DLDisplay dldisplay;
 
 ButtonDebouncer ButtonEncoder;
 
+typedef enum LASTSET : uint8_t
+{
+	AMPERE =					0x01,
+	WATTS =						0x02,
+	NOTHING =					0xFF
+} LastSet_t;
+
+LastSet_t lastSet = LASTSET::NOTHING;
+
 // uint8_t initIndicator[9] = {'d', 'n', 'x', 'p', 's', 'u', 'd', 'l', '5'};
 
 // state machine
@@ -41,6 +50,10 @@ ButtonDebouncer ButtonEncoder;
 uint16_t milliAmpsSetVal = 0;
 uint16_t milliAmpsMinVal = 0;
 uint16_t milliAmpsMaxVal = 500;
+
+uint16_t milliWattsSetVal = 0;
+uint16_t milliWattsMinVal = 0;
+uint16_t milliWattsMaxVal = 12500;
 
 uint16_t milliAmpsSetValDisplay = 0;
 uint16_t milliAmpsReadVal = 0;
@@ -77,37 +90,49 @@ void setup()
 	dldisplay.Init(DLDisplay::DL_DISPLAY::VALUES1, &milliAmpsSetVal, &milliAmpsSetValDisplay, &milliAmpsReadVal, &voltsReadVal, &powerReadVal, DISPLAY_UPDATE_INVERVAL);
 	dldisplay.InitNetworkVals(IP, NM, GW, SSID, WPA2PSK);
 
-	dldisplay.OnEncoderUp([](uint16_t newVal) {
-		if (newVal <= CURRENT_UPPER_LIMIT)
-		{
-			// dldisplay.EncoderUp();
-			milliAmpsSetValDisplay = newVal;
-			// dac.set(milliAmpsSetVal);
-		}
-		else
-		{
-			milliAmpsSetValDisplay = CURRENT_UPPER_LIMIT;
-		}
-		dldisplay.Refresh();
-	});
+	// dldisplay.OnEncoderUp([](uint16_t newVal) {
+	// 	if (newVal <= CURRENT_UPPER_LIMIT)
+	// 	{
+	// 		// dldisplay.EncoderUp();
+	// 		milliAmpsSetValDisplay = newVal;
+	// 		// dac.set(milliAmpsSetVal);
+	// 	}
+	// 	else
+	// 	{
+	// 		milliAmpsSetValDisplay = CURRENT_UPPER_LIMIT;
+	// 	}
+	// 	dldisplay.Refresh();
+	// });
 
-	dldisplay.OnEncoderDown([](uint16_t newVal) {
-		if (newVal >= CURRENT_LOWER_LIMIT && newVal <= CURRENT_UPPER_LIMIT)
-		{
-			// dldisplay.EncoderDown();
-			milliAmpsSetValDisplay = newVal;
-			// dac.set(milliAmpsSetVal);
-		}
-		else
-		{
-			milliAmpsSetValDisplay = CURRENT_LOWER_LIMIT;
-		}
-		dldisplay.Refresh();
-	});
+	// dldisplay.OnEncoderDown([](uint16_t newVal) {
+	// 	if (newVal >= CURRENT_LOWER_LIMIT && newVal <= CURRENT_UPPER_LIMIT)
+	// 	{
+	// 		// dldisplay.EncoderDown();
+	// 		milliAmpsSetValDisplay = newVal;
+	// 		// dac.set(milliAmpsSetVal);
+	// 	}
+	// 	else
+	// 	{
+	// 		milliAmpsSetValDisplay = CURRENT_LOWER_LIMIT;
+	// 	}
+	// 	dldisplay.Refresh();
+	// });
 
-	dldisplay.OnEncoderConfirmValue([](uint16_t newVal) {
-		milliAmpsSetVal = newVal;
-		dac.set(milliAmpsSetVal);
+	dldisplay.OnEncoderConfirmValue([](uint16_t *newVal) {
+
+		if (newVal == &milliAmpsSetVal)
+		{
+			milliAmpsSetVal = *newVal;
+			dac.set(milliAmpsSetVal);
+			lastSet = LASTSET::AMPERE;
+		}
+		else if (newVal == &milliWattsSetVal)
+		{
+			milliWattsSetVal = *newVal;
+			lastSet = LASTSET::WATTS;
+			LOG("new mW: %u\r\n", milliWattsSetVal);
+		}
+		
 		
 		// dldisplay.Refresh();
 	});
@@ -125,10 +150,11 @@ void setup()
 
 	dldisplay.AddPage(	"     SET|    READ|",
 						"  0.000A|  0.000V|",
-						"        |  0.000A|",
+						"       W|  0.000A|",
 						"        |  0.000W|");
 	dldisplay.AddPageItem(0, &milliAmpsSetVal, &milliAmpsMinVal, &milliAmpsMaxVal, 10, 2, 1, 1, 1, true, true, true);
-	dldisplay.AddPageItem(0, "Cfg", 2, 4, 4, 1, true, false);
+	dldisplay.AddPageItem(0, &milliWattsSetVal, &milliWattsMinVal, &milliWattsMaxVal, 10, 3, 2, 1, 1, true, true, true);	
+	dldisplay.AddPageItem(0, "Cfg", 3, 4, 4, 1, true, false);
 	dldisplay.AddPageItem(0, &voltsReadVal, NULL, NULL, 0, 0, 1, 10, 1, false, false);
 	dldisplay.AddPageItem(0, &milliAmpsReadVal, NULL, NULL, 0, 0, 2, 10, 1, false, false);
 	dldisplay.AddPageItem(0, &powerReadVal, NULL, NULL, 0, 0, 3, 10, 1, false, false);
@@ -217,6 +243,15 @@ void processADC()
 		voltsReadVal = adc.readVoltageA(26.66);
 		milliAmpsReadVal = adc.readVoltageB();
 		powerReadVal = ((uint32_t)voltsReadVal * (uint32_t)milliAmpsReadVal) / 1000;
+
+		if (lastSet == LASTSET::WATTS)
+		{
+			milliAmpsSetVal = round((float)((float)milliWattsSetVal / (float)voltsReadVal) * (float)1000);
+			if (dac.set(milliAmpsSetVal))
+			{
+				LOG("mW set: %u, V read: %u, mA set: %u\r\n", milliWattsSetVal, voltsReadVal, milliAmpsSetVal);
+			}			
+		}
 	}
 }
 

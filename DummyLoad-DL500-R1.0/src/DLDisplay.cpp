@@ -441,12 +441,19 @@ void DLDisplay::_processEncoder()
 					{
 						auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valueStructPtr);
 
-						if (uint16DataStruct->tmpValue <
+						if (uint16DataStruct->tmpValue + this->_iPow(uint16DataStruct->multiplicatorBase, uint16DataStruct->multiplicatorPower) <
 							*uint16DataStruct->maxValPtr)
-							{
-								uint16DataStruct->tmpValue++;
-								this->Refresh();
-							}
+						{
+							// LOG("val: %u, pow: %u\r\n", uint16DataStruct->tmpValue, this->_iPow(uint16DataStruct->multiplicatorBase, uint16DataStruct->multiplicatorPower));
+							// LOG("base: %u, power: %u\r\n", uint16DataStruct->multiplicatorBase, uint16DataStruct->multiplicatorPower);
+							uint16DataStruct->tmpValue += this->_iPow(uint16DataStruct->multiplicatorBase, uint16DataStruct->multiplicatorPower);
+							this->Refresh();
+						}
+						else
+						{
+							uint16DataStruct->tmpValue = *uint16DataStruct->maxValPtr;
+							this->Refresh();
+						}
 					}
 				}				
 			}
@@ -530,12 +537,18 @@ void DLDisplay::_processEncoder()
 					{
 						auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valueStructPtr);
 
-						if (uint16DataStruct->tmpValue >
+						if (uint16DataStruct->tmpValue > this->_iPow(uint16DataStruct->multiplicatorBase, uint16DataStruct->multiplicatorPower) && 
+							uint16DataStruct->tmpValue - this->_iPow(uint16DataStruct->multiplicatorBase, uint16DataStruct->multiplicatorPower) >
 							*uint16DataStruct->minValPtr)
-							{
-								uint16DataStruct->tmpValue--;
-								this->Refresh();
-							}
+						{
+							uint16DataStruct->tmpValue -= this->_iPow(uint16DataStruct->multiplicatorBase, uint16DataStruct->multiplicatorPower);
+							this->Refresh();
+						}
+						else
+						{
+							uint16DataStruct->tmpValue = *uint16DataStruct->minValPtr;
+							this->Refresh();
+						}
 					}
 				}
 			}
@@ -612,17 +625,17 @@ void DLDisplay::_processEncoder()
 	}
 }
 
-void DLDisplay::OnEncoderUp(void (*func)(uint16_t newVal))
-{
-	this->_EncoderUpFunction = func;
-}
+// void DLDisplay::OnEncoderUp(void (*func)(uint16_t newVal))
+// {
+// 	this->_EncoderUpFunction = func;
+// }
 
-void DLDisplay::OnEncoderDown(void (*func)(uint16_t newVal))
-{
-	this->_EncoderDownFunction = func;
-}
+// void DLDisplay::OnEncoderDown(void (*func)(uint16_t newVal))
+// {
+// 	this->_EncoderDownFunction = func;
+// }
 
-void DLDisplay::OnEncoderConfirmValue(void (*func)(uint16_t newVal))
+void DLDisplay::OnEncoderConfirmValue(void (*func)(uint16_t *newVal))
 {
 	this->_EncoderConfirmValueFunction = func;
 }
@@ -635,6 +648,20 @@ void DLDisplay::EncoderUp()
 void DLDisplay::EncoderDown()
 {
 
+}
+
+uint16_t DLDisplay::_iPow(uint16_t base, uint16_t power)
+{
+	uint16_t retVal = base;
+	for (uint8_t n = 1; n < power; n++)
+	{
+		retVal *= base;
+	}
+
+	if (power == 0)
+		return 1;
+	else
+		return retVal;
 }
 
 void DLDisplay::ButtonPressed()
@@ -653,6 +680,31 @@ void DLDisplay::ButtonPressed()
 
 		this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].editing = true;
 		this->_setCursorPosition();
+	}
+	else if (this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].action == DLITEMACTION::EDIT &&
+			 this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].editing == true)
+	{
+		// this->_increaseValuePower();
+		if (this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].type == DLITEMTYPE::UINT16)
+		{
+			auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valueStructPtr);
+			
+			uint16DataStruct->multiplicatorPower++;
+			if (uint16DataStruct->multiplicatorPower > uint16DataStruct->multiplicatorPowerMax)
+			{
+				uint16DataStruct->multiplicatorPower = 0;
+			}
+			this->_cursorBlinkPosX = this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].col + 
+									this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].cursorColOffset -
+									uint16DataStruct->multiplicatorPower;
+
+			if (uint16DataStruct->multiplicatorPower >= 3)
+			{
+				this->_cursorBlinkPosX -= 1;
+			}
+			
+			this->_setCursorPosition();
+		}
 	}
 	else if (this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].action == DLITEMACTION::JUMP)
 	{
@@ -737,7 +789,7 @@ void DLDisplay::ButtonHold()
 			auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valueStructPtr);
 
 			*uint16DataStruct->valuePtr = uint16DataStruct->tmpValue;
-			(*_EncoderConfirmValueFunction)(*uint16DataStruct->valuePtr);
+			(*_EncoderConfirmValueFunction)(uint16DataStruct->valuePtr);
 		}
 	}		
 }
