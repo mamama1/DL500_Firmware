@@ -71,6 +71,10 @@ uint32_t lastUARTsendMillis = 0;
 
 uint32_t heartbeatMillis = 0;
 
+uint8_t valuesPage = 0;
+uint8_t ampsPageItemId = NULL;
+uint8_t wattsPageItemId = NULL;
+
 // prototypes
 void initPins();
 void processADC();
@@ -83,11 +87,11 @@ void setup()
 	// Serial.begin(115200);
 	Serial1.begin(28800, SERIAL_8N1);
 
-	while(!Serial.available()){};
-	Serial.println("Hello world");
+	// while(!Serial.available()){};
+	// Serial.println("Hello world");
 
 	initPins();
-	dldisplay.Init(DLDisplay::DL_DISPLAY::VALUES1, &milliAmpsSetVal, &milliAmpsSetValDisplay, &milliAmpsReadVal, &voltsReadVal, &powerReadVal, DISPLAY_UPDATE_INVERVAL);
+	dldisplay.Init(&milliAmpsSetVal, &milliAmpsSetValDisplay, &milliAmpsReadVal, &voltsReadVal, &powerReadVal, DISPLAY_UPDATE_INVERVAL);
 	dldisplay.InitNetworkVals(IP, NM, GW, SSID, WPA2PSK);
 
 	// dldisplay.OnEncoderUp([](uint16_t newVal) {
@@ -130,7 +134,7 @@ void setup()
 		{
 			milliWattsSetVal = *newVal;
 			lastSet = LASTSET::WATTS;
-			LOG("new mW: %u\r\n", milliWattsSetVal);
+			// LOG("new mW: %u\r\n", milliWattsSetVal);
 		}
 		
 		
@@ -148,13 +152,13 @@ void setup()
 		dldisplay.ButtonHold();
 	});
 
-	dldisplay.AddPage(	"     SET|    READ|",
-						"  0.000A|  0.000V|",
-						"       W|  0.000A|",
-						"        |  0.000W|");
-	dldisplay.AddPageItem(0, &milliAmpsSetVal, &milliAmpsMinVal, &milliAmpsMaxVal, 10, 2, 1, 1, 1, true, true, true);
-	dldisplay.AddPageItem(0, &milliWattsSetVal, &milliWattsMinVal, &milliWattsMaxVal, 10, 3, 2, 1, 1, true, true, true);	
-	dldisplay.AddPageItem(0, "Cfg", 3, 4, 4, 1, true, false);
+	valuesPage = dldisplay.AddPage(	"     SET|    READ|",
+									"        |  0.000V|",
+									"  0.000A|  0.000A|",
+									"  0.000W|  0.000W|");
+	ampsPageItemId = dldisplay.AddPageItem(0, &milliAmpsSetVal, &milliAmpsMinVal, &milliAmpsMaxVal, 10, 2, 2, 1, 1, true, true, true);
+	wattsPageItemId = dldisplay.AddPageItem(0, &milliWattsSetVal, &milliWattsMinVal, &milliWattsMaxVal, 10, 3, 3, 1, 1, true, true, true);	
+	dldisplay.AddPageItem(0, DLDisplay::DLICON::WRENCH, 3, 19, 1, 1, true, false);
 	dldisplay.AddPageItem(0, &voltsReadVal, NULL, NULL, 0, 0, 1, 10, 1, false, false);
 	dldisplay.AddPageItem(0, &milliAmpsReadVal, NULL, NULL, 0, 0, 2, 10, 1, false, false);
 	dldisplay.AddPageItem(0, &powerReadVal, NULL, NULL, 0, 0, 3, 10, 1, false, false);
@@ -204,7 +208,6 @@ void loop()
 	dldisplay.Process();
 	processUART();
 
-
 	if (millis() - heartbeatMillis > 600)
 	{
 		heartbeatMillis = millis();
@@ -246,11 +249,24 @@ void processADC()
 
 		if (lastSet == LASTSET::WATTS)
 		{
+			dldisplay.PageItemVisible(valuesPage, ampsPageItemId, false);
+			dldisplay.PageItemVisible(valuesPage, wattsPageItemId, true);
+
 			milliAmpsSetVal = round((float)((float)milliWattsSetVal / (float)voltsReadVal) * (float)1000);
+			if (milliAmpsSetVal > DAC_UPPER_LIMIT)
+			{
+				milliAmpsSetVal = DAC_UPPER_LIMIT;
+			}
+
 			if (dac.set(milliAmpsSetVal))
 			{
-				LOG("mW set: %u, V read: %u, mA set: %u\r\n", milliWattsSetVal, voltsReadVal, milliAmpsSetVal);
+				// LOG("mW set: %u, V read: %u, mA set: %u\r\n", milliWattsSetVal, voltsReadVal, milliAmpsSetVal);
 			}			
+		}
+		else
+		{
+			dldisplay.PageItemVisible(valuesPage, ampsPageItemId, true);
+			dldisplay.PageItemVisible(valuesPage, wattsPageItemId, false);
 		}
 	}
 }

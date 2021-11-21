@@ -10,7 +10,7 @@ DLDisplay::DLDisplay() :
 	this->_encoderNewPosition = this->enc.read();
 }
 
-void DLDisplay::Init(DLDisplay_t initialState, uint16_t *currentSet, uint16_t *currentSetDisplay, uint16_t *currentRead, uint16_t *voltageRead, uint16_t *powerRead, uint16_t displayUpdateIntervalMillis)
+void DLDisplay::Init(uint16_t *currentSet, uint16_t *currentSetDisplay, uint16_t *currentRead, uint16_t *voltageRead, uint16_t *powerRead, uint16_t displayUpdateIntervalMillis)
 {
 	this->_currentSet = currentSet;
 	this->_currentRead = currentRead;
@@ -21,11 +21,11 @@ void DLDisplay::Init(DLDisplay_t initialState, uint16_t *currentSet, uint16_t *c
 
 	this->_displayUpdateIntervalMillis = displayUpdateIntervalMillis;
 
-	this->LCD.createChar(0, symCL1);
-	this->LCD.createChar(1, symCR1);
-	this->LCD.createChar(2, symVR1);
-	this->LCD.createChar(3, symSettings1);
-	this->LCD.createChar(4, symFull1);
+	this->LCD.createChar(0, symWrench);
+	// this->LCD.createChar(1, symCR1);
+	// this->LCD.createChar(2, symVR1);
+	// this->LCD.createChar(3, symSettings1);
+	// this->LCD.createChar(4, symFull1);
 
 	this->LCD.clear();
 
@@ -123,10 +123,10 @@ uint8_t DLDisplay::AddPage(const char *scaffoldLine1, const char *scaffoldLine2,
 	return currentPageIndex;
 }
 
-DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint16_t *uint16MinValPtr, uint16_t *uint16MaxValPtr, uint16_t multiplicatorBase, uint16_t multiplicatorPowerMax, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selectable, bool selected)
+uint8_t DLDisplay::AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint16_t *uint16MinValPtr, uint16_t *uint16MaxValPtr, uint16_t multiplicatorBase, uint16_t multiplicatorPowerMax, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selectable, bool selected)
 {
 	if (pageId + 1 > this->_pageCount)
-		return NULL;
+		return UINT8_MAX;
 
 	this->_pages[pageId].pageItemCount++;
 
@@ -146,6 +146,7 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint16_t *uint16
 	uint16DataStruct->multiplicatorBase = multiplicatorBase;
 	uint16DataStruct->multiplicatorPowerMax = multiplicatorPowerMax;
 	uint16DataStruct->multiplicatorPower = 0;
+	uint16DataStruct->visible = true;
 	
 
 	this->_pages[pageId].pageItems[currentPageItemIndex].index = currentPageItemIndex;
@@ -178,13 +179,13 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint16_t *uint16
 		this->_pages[pageId].selectedItemIndex = this->_pages[pageId].pageItems[currentPageItemIndex].index;
 	}
 
-	return &this->_pages[pageId].pageItems[currentPageItemIndex];
+	return currentPageItemIndex;
 }
 
-DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint8_t *IPArrayPtr, uint8_t row, uint8_t col)
+uint8_t DLDisplay::AddPageItem(uint8_t pageId, uint8_t *IPArrayPtr, uint8_t row, uint8_t col)
 {
 	if (pageId + 1 > this->_pageCount)
-		return NULL;
+		return UINT8_MAX;
 
 	this->_pages[pageId].pageItemCount++;
 
@@ -213,14 +214,14 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, uint8_t *IPArray
 	this->_pages[pageId].pageItems[currentPageItemIndex].targetPageId = 0;
 	// this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = 0;
 
-	return &this->_pages[pageId].pageItems[currentPageItemIndex];
+	return currentPageItemIndex;
 }
 
 
-DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected)
+uint8_t DLDisplay::AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected)
 {
 	if (pageId + 1 > this->_pageCount)
-		return NULL;
+		return UINT8_MAX;
 	
 	this->_pages[pageId].pageItemCount++;
 
@@ -258,7 +259,69 @@ DLDisplay::DLPageItem_t* DLDisplay::AddPageItem(uint8_t pageId, const char *text
 		this->_pages[pageId].selectedItemIndex = this->_pages[pageId].pageItems[currentPageItemIndex].index;
 	}
 
-	return &this->_pages[pageId].pageItems[currentPageItemIndex];
+	return currentPageItemIndex;
+}
+
+uint8_t DLDisplay::AddPageItem(uint8_t pageId, DLIcon_t icon, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected)
+{
+	if (pageId + 1 > this->_pageCount)
+		return UINT8_MAX;
+	
+	this->_pages[pageId].pageItemCount++;
+
+	uint8_t currentPageItemIndex = this->_pages[pageId].pageItemCount - 1;
+
+	this->_pages[pageId].pageItems = (DLPageItem_t*)realloc(this->_pages[pageId].pageItems, this->_pages[pageId].pageItemCount * sizeof(*this->_pages[pageId].pageItems));
+	this->_checkNullPtr(this->_pages[pageId].pageItems);
+
+
+	this->_pages[pageId].pageItems[currentPageItemIndex].index = currentPageItemIndex;
+	
+	this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr = (DLIcon_t*)malloc(sizeof(DLIcon_t));
+	this->_checkNullPtr(this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr);
+	*(DLIcon_t*)this->_pages[pageId].pageItems[currentPageItemIndex].valueStructPtr = icon;
+
+	// this->_pages[pageId].pageItems[currentPageItemIndex].minValPtr = NULL;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].maxValPtr = NULL;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorBase = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPowerMax = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].multiplicatorPower = 0;
+	this->_pages[pageId].pageItems[currentPageItemIndex].row = row;
+	this->_pages[pageId].pageItems[currentPageItemIndex].col = col;
+	this->_pages[pageId].pageItems[currentPageItemIndex].selectorColOffset = selectorColOffset;
+	this->_pages[pageId].pageItems[currentPageItemIndex].selectable = selectable;
+	this->_pages[pageId].pageItems[currentPageItemIndex].editable = false;
+	this->_pages[pageId].pageItems[currentPageItemIndex].targetPageId = targetPageId;
+	this->_pages[pageId].pageItems[currentPageItemIndex].action = DLITEMACTION::JUMP;
+	this->_pages[pageId].pageItems[currentPageItemIndex].type = DLITEMTYPE::ICON;
+	this->_pages[pageId].pageItems[currentPageItemIndex].editing = false;
+	this->_pages[pageId].pageItems[currentPageItemIndex].cursorColOffset = 0;
+	// this->_pages[pageId].pageItems[currentPageItemIndex].tmpValue = 0;
+
+	if (selected)
+	{
+		this->_pages[pageId].selectedItemIndex = this->_pages[pageId].pageItems[currentPageItemIndex].index;
+	}
+
+	return currentPageItemIndex;
+}
+
+void DLDisplay::PageItemVisible(uint8_t pageId, uint8_t pageItemId, bool visible)
+{
+	if (pageId > this->_pageCount)
+		return;
+
+	if (pageItemId > this->_pages[pageId].pageItemCount)
+		return;
+	
+	if (this->_pages[pageId].pageItems[pageItemId].type == DLITEMTYPE::UINT16)
+	{
+		auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[pageId].pageItems[pageItemId].valueStructPtr);
+
+		// uint16DataStruct->visible = visible;
+		uint16DataStruct->visible = visible;
+		// LOG("visible: %u\r\n", visible);
+	}
 }
 
 void DLDisplay::SetPage(uint8_t pageId)
@@ -680,6 +743,7 @@ void DLDisplay::ButtonPressed()
 
 		this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].editing = true;
 		this->_setCursorPosition();
+		this->Refresh();
 	}
 	else if (this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].action == DLITEMACTION::EDIT &&
 			 this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].editing == true)
@@ -702,7 +766,7 @@ void DLDisplay::ButtonPressed()
 			{
 				this->_cursorBlinkPosX -= 1;
 			}
-			
+			// LOG("multiPower: %u\r\n", uint16DataStruct->multiplicatorPower);
 			this->_setCursorPosition();
 		}
 	}
@@ -787,6 +851,7 @@ void DLDisplay::ButtonHold()
 		if (this->_EncoderConfirmValueFunction != NULL)
 		{
 			auto *uint16DataStruct = reinterpret_cast<DLUInt16Data_t *>(this->_pages[this->_currentPage].pageItems[this->_pages[this->_currentPage].selectedItemIndex].valueStructPtr);
+			uint16DataStruct->multiplicatorPower = 0;
 
 			*uint16DataStruct->valuePtr = uint16DataStruct->tmpValue;
 			(*_EncoderConfirmValueFunction)(uint16DataStruct->valuePtr);
@@ -794,10 +859,10 @@ void DLDisplay::ButtonHold()
 	}		
 }
 
-DLDisplay::DLDisplay_t DLDisplay::GetState()
-{
-	return this->_currentState;
-}
+// DLDisplay::DLDisplay_t DLDisplay::GetState()
+// {
+// 	return this->_currentState;
+// }
 
 void DLDisplay::_drawPage(uint8_t pageId)
 {
@@ -891,14 +956,14 @@ void DLDisplay::_drawPageValues(uint8_t pageId)
 			if (this->_pages[pageId].pageItems[n].selectable)
 			{
 				// Serial.println(this->_pages[pageId].pageItems[n].tmpValue);
-				
-
-				this->_displayValue(uint16DataStruct->tmpValue);
+				// LOG("%u: %u\r\n", uint16DataStruct->tmpValue, this->_pages[pageId].pageItems[n].visible);
+				this->_displayValue(uint16DataStruct->tmpValue, uint16DataStruct->visible || this->_pages[pageId].pageItems[n].editing);
 			}
 			else
 			{
 				// Serial.println(*(uint16_t*)this->_pages[pageId].pageItems[n].valuePtr);
-				this->_displayValue(*uint16DataStruct->valuePtr);
+				// LOG("%u: %u\r\n", *uint16DataStruct->valuePtr, this->_pages[pageId].pageItems[n].visible);
+				this->_displayValue(*uint16DataStruct->valuePtr, uint16DataStruct->visible || this->_pages[pageId].pageItems[n].editing);
 				// uint16_t value = *((uint16_t *)this->_pages[pageId].pageItems[n].valuePtr);
 				// this->_displayValue(value);
 
@@ -912,6 +977,10 @@ void DLDisplay::_drawPageValues(uint8_t pageId)
 
 			// this->LCD.print((*this->_pages[page].pageItems[n].text));
 			// this->LCD.print((*(char*)(this->_pages[page].pageItems[n].text)));
+		}
+		else if (this->_pages[pageId].pageItems[n].type == DLITEMTYPE::ICON)
+		{
+			this->LCD.write(byte(*(DLIcon_t *)this->_pages[pageId].pageItems[n].valueStructPtr));
 		}
 		// else if (this->_pages[pageId].pageItems[n].type == DLITEMTYPE::UINT32)
 		// {
@@ -958,35 +1027,42 @@ void DLDisplay::_drawPageValues(uint8_t pageId)
 	// }
 }
 
-uint16_t DLDisplay::_getMultiplier()
-{
-	if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_E)
-	{
-		return 1;
-	}
-	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_Z)
-	{
-		return 10;
-	}
-	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_H)
-	{
-		return 100;
-	}
-	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_T)
-	{
-		return 1000;
-	}
+// uint16_t DLDisplay::_getMultiplier()
+// {
+// 	if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_E)
+// 	{
+// 		return 1;
+// 	}
+// 	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_Z)
+// 	{
+// 		return 10;
+// 	}
+// 	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_H)
+// 	{
+// 		return 100;
+// 	}
+// 	else if (this->_currentState == DLDisplay::DL_DISPLAY::EDIT_T)
+// 	{
+// 		return 1000;
+// 	}
 	
-	return 1;
-}
+// 	return 1;
+// }
 
 void DLDisplay::Refresh()
 {
 	this->_forceDisplayUpdate = true;
 }
 
-void DLDisplay::_displayValue(uint16_t val)
+void DLDisplay::_displayValue(uint16_t val, bool visible)
 {
+	if (visible == false)
+	{
+		// LOG("%u: hidden", val);
+		this->LCD.print("--.---");
+		return;
+	}
+
 	if (val < 10000)
 	{
 		this->LCD.print(" ");
@@ -1028,8 +1104,8 @@ void DLDisplay::_displayIP(uint8_t *ip)
 }
 
 
-void DLDisplay::SetState(DLDisplay_t state)
-{
+// void DLDisplay::SetState(DLDisplay_t state)
+// {
 	// if ((this->_currentState >= DL_DISPLAY::CONFIG + 1 && state < DL_DISPLAY::CONFIG + 1) || this->_currentState == DL_DISPLAY::NONE)
 	// {
 	// 	this->_drawValuesScaffold();
@@ -1230,8 +1306,8 @@ void DLDisplay::SetState(DLDisplay_t state)
 	// }
 
 
-	this->_currentState = state;	
-}
+// 	this->_currentState = state;	
+// }
 
 // void DLDisplay::_drawValuesScaffold()
 // {

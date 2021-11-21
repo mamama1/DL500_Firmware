@@ -13,36 +13,36 @@ class DLDisplay
 {
 	public:
 
-		typedef enum DL_DISPLAY : uint8_t
-		{
-			NONE1 =						0x00,
-			VALUES1 =					0x10,
-			EDIT_E =					0x11,
-			EDIT_Z =					0x12,
-			EDIT_H =					0x13,
-			EDIT_T =					0x14,
-			CONFIG1 =					0x20,
-			CONFIG_IP1 =				0x21,
-			CONFIG_WIFI1 =				0x22,
-			CONFIG_EXIT =				0x23,
-			CONFIG_IP_IP =				0x30,
-			CONFIG_IP_IP_EDIT_1 = 		0x31,
-			CONFIG_IP_IP_EDIT_2 = 		0x32,
-			CONFIG_IP_IP_EDIT_3 = 		0x33,
-			CONFIG_IP_IP_EDIT_4 = 		0x34,
-			CONFIG_IP_NM =				0x35,
-			CONFIG_IP_NM_EDIT_1 =		0x36,
-			CONFIG_IP_NM_EDIT_2 =		0x37,
-			CONFIG_IP_NM_EDIT_3 =		0x38,
-			CONFIG_IP_NM_EDIT_4 =		0x39,
-			CONFIG_IP_GW =				0x40,
-			CONFIG_IP_GW_EDIT_1 =		0x41,
-			CONFIG_IP_GW_EDIT_2 =		0x42,
-			CONFIG_IP_GW_EDIT_3 =		0x43,
-			CONFIG_IP_GW_EDIT_4 =		0x44,
-			CONFIG_IP_EXIT =			0x45,
-			CONFIG_WIFI_EXIT =			0x50
-		} DLDisplay_t;
+		// typedef enum DL_DISPLAY : uint8_t
+		// {
+		// 	NONE1 =						0x00,
+		// 	VALUES1 =					0x10,
+		// 	EDIT_E =					0x11,
+		// 	EDIT_Z =					0x12,
+		// 	EDIT_H =					0x13,
+		// 	EDIT_T =					0x14,
+		// 	CONFIG1 =					0x20,
+		// 	CONFIG_IP1 =				0x21,
+		// 	CONFIG_WIFI1 =				0x22,
+		// 	CONFIG_EXIT =				0x23,
+		// 	CONFIG_IP_IP =				0x30,
+		// 	CONFIG_IP_IP_EDIT_1 = 		0x31,
+		// 	CONFIG_IP_IP_EDIT_2 = 		0x32,
+		// 	CONFIG_IP_IP_EDIT_3 = 		0x33,
+		// 	CONFIG_IP_IP_EDIT_4 = 		0x34,
+		// 	CONFIG_IP_NM =				0x35,
+		// 	CONFIG_IP_NM_EDIT_1 =		0x36,
+		// 	CONFIG_IP_NM_EDIT_2 =		0x37,
+		// 	CONFIG_IP_NM_EDIT_3 =		0x38,
+		// 	CONFIG_IP_NM_EDIT_4 =		0x39,
+		// 	CONFIG_IP_GW =				0x40,
+		// 	CONFIG_IP_GW_EDIT_1 =		0x41,
+		// 	CONFIG_IP_GW_EDIT_2 =		0x42,
+		// 	CONFIG_IP_GW_EDIT_3 =		0x43,
+		// 	CONFIG_IP_GW_EDIT_4 =		0x44,
+		// 	CONFIG_IP_EXIT =			0x45,
+		// 	CONFIG_WIFI_EXIT =			0x50
+		// } DLDisplay_t;
 
 		// typedef enum DLPAGEENUM : uint8_t
 		// {
@@ -61,6 +61,7 @@ class DLDisplay
 			STRING =					0x04,
 			IP =						0x05,
 			PAGE =						0x06,
+			ICON =						0x07,
 			NOTYPE =					0xFF
 		} DLItemType_t;
 
@@ -71,6 +72,11 @@ class DLDisplay
 			NONE =						0xFF
 		} DLItemAction_t;
 
+		typedef enum DLICON : uint8_t
+		{
+			WRENCH =					0x00
+		} DLIcon_t;
+
 		typedef struct
 		{
 			uint16_t		*valuePtr = NULL;
@@ -80,6 +86,7 @@ class DLDisplay
 			uint16_t		multiplicatorBase = 0;
 			uint16_t		multiplicatorPower = 0;
 			uint16_t		multiplicatorPowerMax = 0;
+			bool			visible = true;
 		} DLUInt16Data_t;
 
 		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
@@ -97,6 +104,7 @@ class DLDisplay
 			bool			selectable = false;
 			bool			editable = false;
 			bool			editing = false;
+			// bool			visible = false;
 		} DLPageItem_t;
 
 		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
@@ -111,12 +119,12 @@ class DLDisplay
 		
 		DLDisplay();
 
-		void Init(DLDisplay_t initialState, uint16_t *currentSet, uint16_t *currentSetDisplay, uint16_t *currentRead, uint16_t *voltageRead, uint16_t *powerRead, uint16_t displayUpdateIntervalMillis);
+		void Init(uint16_t *currentSet, uint16_t *currentSetDisplay, uint16_t *currentRead, uint16_t *voltageRead, uint16_t *powerRead, uint16_t displayUpdateIntervalMillis);
 		void InitNetworkVals(uint8_t *iparray, uint8_t *nmarray, uint8_t *gwarray, char *ssid, char *psk);
 		void Process();
-		void SetState(DLDisplay_t state);
+		// void SetState(DLDisplay_t state);
 		
-		DLDisplay_t GetState();
+		// DLDisplay_t GetState();
 		void Refresh();
 		void ButtonPressed();
 		void ButtonHold();
@@ -128,11 +136,14 @@ class DLDisplay
 		void OnEncoderConfirmValue(void (*func)(uint16_t *newVal));
 
 		uint8_t AddPage(const char *scaffoldLine1, const char *scaffoldLine2, const char *scaffoldLine3, const char *scaffoldLine4);
-		DLPageItem_t* AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint16_t *uint16MinValPtr, uint16_t *uint16MaxValPtr, uint16_t multiplicatorBase, uint16_t multiplicatorPowerMax, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selectable, bool selected = false);
-		DLPageItem_t* AddPageItem(uint8_t pageId, uint8_t *IPArrayPtr, uint8_t row, uint8_t col);
+		uint8_t AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint16_t *uint16MinValPtr, uint16_t *uint16MaxValPtr, uint16_t multiplicatorBase, uint16_t multiplicatorPowerMax, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selectable, bool selected = false);
+		uint8_t AddPageItem(uint8_t pageId, uint8_t *IPArrayPtr, uint8_t row, uint8_t col);
 		// DLPageItem_t* AddPageItem(uint8_t pageId, uint8_t *ipOct1Ptr, uint8_t *ipOct2Ptr, uint8_t *ipOct3Ptr, uint8_t *ipOct4Ptr, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selected = false);
 		// DLPageItem_t* AddPageItem(uint8_t pageId, uint32_t *uint32ValPtr, uint8_t row, uint8_t col, bool editable, bool selected = false);
-		DLPageItem_t* AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected = false);
+		uint8_t AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected = false);
+		uint8_t AddPageItem(uint8_t pageId, DLIcon_t icon, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected = false);
+
+		void PageItemVisible(uint8_t pageId, uint8_t pageItemId, bool visible);
 
 		
 		void SetPage(uint8_t pageId);
@@ -142,7 +153,7 @@ class DLDisplay
 		LiquidCrystal LCD;//(LCD_RS_PIN, LCD_EN_PIN, LCD_DB0_PIN, LCD_DB1_PIN, LCD_DB2_PIN, LCD_DB3_PIN,LCD_DB4_PIN, LCD_DB5_PIN, LCD_DB6_PIN, LCD_DB7_PIN);
 		Encoder enc;//(ENC_B_PIN, ENC_A_PIN);
 
-		DLDisplay_t _currentState = DL_DISPLAY::NONE1;
+		// DLDisplay_t _currentState = DL_DISPLAY::NONE1;
 		uint8_t _currentPage = 10;
 
 		// DLPage_t *_currentPagePtr = NULL;
@@ -171,7 +182,7 @@ class DLDisplay
 
 		void _setCursorPosition();
 
-		void _displayValue(uint16_t val);
+		void _displayValue(uint16_t val, bool visible);
 		void _displayIP(uint8_t *ip);
 
 		void _processDisplay();

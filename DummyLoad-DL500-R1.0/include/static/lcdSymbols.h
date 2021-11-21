@@ -46,6 +46,17 @@ byte symSettings1[8] = {
   B00000
 };
 
+byte symWrench[8] = {
+	B01010,
+	B11011,
+	B11111,
+	B01110,
+	B00100,
+	B00100,
+	B00100,
+	B00000
+};
+
 byte symFull1[8] = {
 	B11111,
 	B11111,
