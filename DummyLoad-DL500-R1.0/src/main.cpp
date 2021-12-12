@@ -21,6 +21,12 @@
 #include <ButtonDebouncer.h>
 #include <CRC32.h>
 
+// Encoder library hack
+// #define CORE_NUM_INTERRUPT	3
+// #define CORE_INT0_PIN		10
+// #define CORE_INT1_PIN		11
+// #define CORE_INT2_PIN		2
+
 
 dnxADS1115 ads1115(0x48);		// 1001000; ADDR PIN LOW;  CHA: VIN;			CH2: ASHUNT
 dnxDAC70501 DAC(0x4A);
@@ -72,8 +78,8 @@ uint32_t lastUARTsendMillis = 0;
 uint32_t heartbeatMillis = 0;
 
 uint8_t valuesPage = 0;
-uint8_t ampsPageItemId = NULL;
-uint8_t wattsPageItemId = NULL;
+uint8_t ampsPageItemId = 0;
+uint8_t wattsPageItemId = 0;
 
 // prototypes
 void initPins();
@@ -201,17 +207,16 @@ void setup()
 
 void loop()
 {
-	// processButtons();
 	ButtonEncoder.Process(0, 	!digitalRead(ENC_BTN_PIN));
 	processADC();
 	dac.process();
 	dldisplay.Process();
 	processUART();
 
-	if (millis() - heartbeatMillis > 600)
+	if (millis() - heartbeatMillis > 1000)
 	{
 		heartbeatMillis = millis();
-		// LOG("Heartbeat\r\n");
+		LOG("Heartbeat\r\n");
 		// delay(5);
 		
 		
@@ -261,7 +266,7 @@ void processADC()
 			if (dac.set(milliAmpsSetVal))
 			{
 				// LOG("mW set: %u, V read: %u, mA set: %u\r\n", milliWattsSetVal, voltsReadVal, milliAmpsSetVal);
-			}			
+			}
 		}
 		else
 		{
