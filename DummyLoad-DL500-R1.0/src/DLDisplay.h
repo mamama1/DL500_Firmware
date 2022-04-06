@@ -59,9 +59,10 @@ class DLDisplay
 			UINT32 =					0x02,
 			BOOL =						0x03,
 			STRING =					0x04,
-			IP =						0x05,
-			PAGE =						0x06,
-			ICON =						0x07,
+			STRINGARRAY =				0x05,
+			IP =						0x06,
+			PAGE =						0x07,
+			ICON =						0x08,
 			NOTYPE =					0xFF
 		} DLItemType_t;
 
@@ -71,6 +72,15 @@ class DLDisplay
 			EDIT =						0x01,
 			NONE =						0xFF
 		} DLItemAction_t;
+
+		typedef enum DLUNIT : uint8_t
+		{
+			NOUNIT =					0x00,
+			AMPERE =					0x01,
+			VOLT =						0x02,
+			WATT =						0x03,
+			OHM =						0x04
+		} DLUnit_t;
 
 		typedef enum DLICON : uint8_t
 		{
@@ -86,8 +96,18 @@ class DLDisplay
 			uint16_t		multiplicatorBase = 0;
 			uint16_t		multiplicatorPower = 0;
 			uint16_t		multiplicatorPowerMax = 0;
-			bool			visible = true;
+			DLUnit_t		unit;
 		} DLUInt16Data_t;
+
+		typedef struct
+		{
+			uint8_t itemCount = 0;
+			uint8_t selectedIndex = 0;
+			uint8_t tmpSelectedIndex = 0;
+			char	**valuePtr = NULL;
+			uint8_t longestStringLen = 0;
+		} DLCharArrayData_t;
+		
 
 		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
 		{
@@ -95,6 +115,7 @@ class DLDisplay
 			uint8_t			index = 0;
 			void			*valueStructPtr = NULL;
 			DLItemType_t	type = DLITEMTYPE::NOTYPE;
+			uint8_t			itemCount = 0;				// only needed for DLITEMTYPE::STRINGARRAY
 			uint8_t			row = 0;
 			uint8_t			col = 0;
 			uint8_t			selectorColOffset = 0;
@@ -104,7 +125,7 @@ class DLDisplay
 			bool			selectable = false;
 			bool			editable = false;
 			bool			editing = false;
-			// bool			visible = false;
+			bool			visible = false;
 		} DLPageItem_t;
 
 		typedef struct //__attribute((__packed__)) __attribute__((__may_alias__))
@@ -133,14 +154,15 @@ class DLDisplay
 
 		// void OnEncoderUp(void (*func)(uint16_t newVal));
 		// void OnEncoderDown(void (*func)(uint16_t newVal));
-		void OnEncoderConfirmValue(void (*func)(uint16_t *newVal));
+		void OnEncoderConfirmValue(void (*func)(void *newVal, DLItemType_t type));
 
 		uint8_t AddPage(const char *scaffoldLine1, const char *scaffoldLine2, const char *scaffoldLine3, const char *scaffoldLine4);
-		uint8_t AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint16_t *uint16MinValPtr, uint16_t *uint16MaxValPtr, uint16_t multiplicatorBase, uint16_t multiplicatorPowerMax, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selectable, bool selected = false);
+		uint8_t AddPageItem(uint8_t pageId, uint16_t *uint16ValPtr, uint16_t *uint16MinValPtr, uint16_t *uint16MaxValPtr, uint16_t multiplicatorBase, uint16_t multiplicatorPowerMax, DLUnit_t unit, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selectable, bool selected = false);
 		uint8_t AddPageItem(uint8_t pageId, uint8_t *IPArrayPtr, uint8_t row, uint8_t col);
 		// DLPageItem_t* AddPageItem(uint8_t pageId, uint8_t *ipOct1Ptr, uint8_t *ipOct2Ptr, uint8_t *ipOct3Ptr, uint8_t *ipOct4Ptr, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool editable, bool selected = false);
 		// DLPageItem_t* AddPageItem(uint8_t pageId, uint32_t *uint32ValPtr, uint8_t row, uint8_t col, bool editable, bool selected = false);
 		uint8_t AddPageItem(uint8_t pageId, const char *text, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected = false);
+		uint8_t AddPageItem(uint8_t pageId, uint8_t itemCount, uint8_t row, uint8_t col, uint8_t selectorColOffset, bool selected, ...);
 		uint8_t AddPageItem(uint8_t pageId, DLIcon_t icon, uint8_t row, uint8_t col, uint8_t selectorColOffset, uint8_t targetPageId, bool selectable, bool selected = false);
 
 		void PageItemVisible(uint8_t pageId, uint8_t pageItemId, bool visible);
@@ -182,7 +204,7 @@ class DLDisplay
 
 		void _setCursorPosition();
 
-		void _displayValue(uint16_t val, bool visible);
+		void _displayValue(uint16_t val, bool visible, DLUnit_t unit = DLUNIT::NOUNIT);
 		void _displayIP(uint8_t *ip);
 
 		void _processDisplay();
@@ -226,6 +248,6 @@ class DLDisplay
 
 		void (*_EncoderUpFunction)(uint16_t newVal);
 		void (*_EncoderDownFunction)(uint16_t newVal);
-		void (*_EncoderConfirmValueFunction)(uint16_t *newVal);
+		void (*_EncoderConfirmValueFunction)(void *newVal, DLItemType_t type);
 
 };

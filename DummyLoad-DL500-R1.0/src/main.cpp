@@ -40,14 +40,14 @@ DLDisplay dldisplay;
 
 ButtonDebouncer ButtonEncoder;
 
-typedef enum LASTSET : uint8_t
+typedef enum OPMODE : uint8_t
 {
 	AMPERE =					0x01,
 	WATTS =						0x02,
 	NOTHING =					0xFF
-} LastSet_t;
+} OpMode_t;
 
-LastSet_t lastSet = LASTSET::NOTHING;
+OpMode_t opMode = OPMODE::AMPERE;
 
 // uint8_t initIndicator[9] = {'d', 'n', 'x', 'p', 's', 'u', 'd', 'l', '5'};
 
@@ -128,22 +128,37 @@ void setup()
 	// 	dldisplay.Refresh();
 	// });
 
-	dldisplay.OnEncoderConfirmValue([](uint16_t *newVal) {
+	dldisplay.OnEncoderConfirmValue([](void *newVal, DLDisplay::DLItemType_t type) {
 
-		if (newVal == &milliAmpsSetVal)
+		if (type == DLDisplay::DLITEMTYPE::UINT16)
 		{
-			milliAmpsSetVal = *newVal;
-			dac.set(milliAmpsSetVal);
-			lastSet = LASTSET::AMPERE;
+			if (newVal == &milliAmpsSetVal)
+			{
+				milliAmpsSetVal = *(uint16_t*)newVal;
+				dac.set(milliAmpsSetVal);
+				// opMode = OPMODE::AMPERE;
+			}
+			else if (newVal == &milliWattsSetVal)
+			{
+				milliWattsSetVal = *(uint16_t*)newVal;
+				// opMode = LASTSET::WATTS;
+				// LOG("new mW: %u\r\n", milliWattsSetVal);
+			}
 		}
-		else if (newVal == &milliWattsSetVal)
+		else if (type == DLDisplay::DLITEMTYPE::STRINGARRAY)
 		{
-			milliWattsSetVal = *newVal;
-			lastSet = LASTSET::WATTS;
-			// LOG("new mW: %u\r\n", milliWattsSetVal);
-		}
-		
-		
+			LOG("selected item: %s\r\n", (char *)newVal);
+			if (strcmp((char*)newVal, "CC") == 0)
+			{
+				LOG("CC\r\n");
+				opMode = OPMODE::AMPERE;
+			}
+			else if (strcmp((char*)newVal, "CP") == 0)
+			{
+				LOG("CP\r\n");
+				opMode = OPMODE::WATTS;
+			}
+		}		
 		// dldisplay.Refresh();
 	});
 
@@ -159,15 +174,16 @@ void setup()
 	});
 
 	valuesPage = dldisplay.AddPage(	"     SET|    READ|",
-									"        |  0.000V|",
-									"  0.000A|  0.000A|",
-									"  0.000W|  0.000W|");
-	ampsPageItemId = dldisplay.AddPageItem(0, &milliAmpsSetVal, &milliAmpsMinVal, &milliAmpsMaxVal, 10, 2, 2, 1, 1, true, true, true);
-	wattsPageItemId = dldisplay.AddPageItem(0, &milliWattsSetVal, &milliWattsMinVal, &milliWattsMaxVal, 10, 3, 3, 1, 1, true, true, true);	
+									"        |        |",
+									"        |        |",
+									"        |        |");
+	dldisplay.AddPageItem(0, 2, 1, 2, 2, false, "CC", "CP");
+	ampsPageItemId = dldisplay.AddPageItem(0, &milliAmpsSetVal, &milliAmpsMinVal, &milliAmpsMaxVal, 10, 2, DLDisplay::DLUNIT::AMPERE, 2, 1, 1, true, true, true);
+	wattsPageItemId = dldisplay.AddPageItem(0, &milliWattsSetVal, &milliWattsMinVal, &milliWattsMaxVal, 10, 3, DLDisplay::DLUNIT::WATT, 2, 1, 1, true, true, true);	
 	dldisplay.AddPageItem(0, DLDisplay::DLICON::WRENCH, 3, 19, 1, 1, true, false);
-	dldisplay.AddPageItem(0, &voltsReadVal, NULL, NULL, 0, 0, 1, 10, 1, false, false);
-	dldisplay.AddPageItem(0, &milliAmpsReadVal, NULL, NULL, 0, 0, 2, 10, 1, false, false);
-	dldisplay.AddPageItem(0, &powerReadVal, NULL, NULL, 0, 0, 3, 10, 1, false, false);
+	dldisplay.AddPageItem(0, &voltsReadVal, NULL, NULL, 0, 0, DLDisplay::DLUNIT::VOLT, 1, 10, 1, false, false);
+	dldisplay.AddPageItem(0, &milliAmpsReadVal, NULL, NULL, 0, 0, DLDisplay::DLUNIT::AMPERE, 2, 10, 1, false, false);
+	dldisplay.AddPageItem(0, &powerReadVal, NULL, NULL, 0, 0, DLDisplay::DLUNIT::WATT, 3, 10, 1, false, false);
 
 	dldisplay.AddPage(	"",
 						"",
@@ -216,7 +232,7 @@ void loop()
 	if (millis() - heartbeatMillis > 1000)
 	{
 		heartbeatMillis = millis();
-		LOG("Heartbeat\r\n");
+		// LOG("Heartbeat\r\n");
 		// delay(5);
 		
 		
@@ -252,7 +268,7 @@ void processADC()
 		milliAmpsReadVal = adc.readVoltageB();
 		powerReadVal = ((uint32_t)voltsReadVal * (uint32_t)milliAmpsReadVal) / 1000;
 
-		if (lastSet == LASTSET::WATTS)
+		if (opMode == OPMODE::WATTS)
 		{
 			dldisplay.PageItemVisible(valuesPage, ampsPageItemId, false);
 			dldisplay.PageItemVisible(valuesPage, wattsPageItemId, true);
