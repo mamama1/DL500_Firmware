@@ -597,13 +597,13 @@ void DLDisplay::_processEncoder()
 						if (charArrayDataStruct->tmpSelectedIndex + 1 < charArrayDataStruct->itemCount)
 						{
 							charArrayDataStruct->tmpSelectedIndex++;
-							LOG("idx: %u\r\n", charArrayDataStruct->tmpSelectedIndex);
+							// LOG("idx: %u\r\n", charArrayDataStruct->tmpSelectedIndex);
 							this->Refresh();
 						}
 						else
 						{
 							charArrayDataStruct->tmpSelectedIndex = 0;
-							LOG("idx: %u\r\n", charArrayDataStruct->tmpSelectedIndex);
+							// LOG("idx: %u\r\n", charArrayDataStruct->tmpSelectedIndex);
 							this->Refresh();
 						}
 					}
@@ -612,7 +612,7 @@ void DLDisplay::_processEncoder()
 			else
 			{
 				this->_pages[this->_currentPage].selectedItemIndex = this->_findNextSelectableItem();
-				LOG("selected index: %u\r\n", this->_pages[this->_currentPage].selectedItemIndex);
+				// LOG("selected index: %u\r\n", this->_pages[this->_currentPage].selectedItemIndex);
 				this->Refresh();
 			}
 			// else if (this->_pages[this->_currentPage].pageItems[1])
@@ -710,13 +710,13 @@ void DLDisplay::_processEncoder()
 						if (charArrayDataStruct->tmpSelectedIndex > 0)
 						{
 							charArrayDataStruct->tmpSelectedIndex--;
-							LOG("idx: %u\r\n", charArrayDataStruct->tmpSelectedIndex);
+							// LOG("idx: %u\r\n", charArrayDataStruct->tmpSelectedIndex);
 							this->Refresh();
 						}
 						else
 						{
 							charArrayDataStruct->tmpSelectedIndex = charArrayDataStruct->itemCount - 1;
-							LOG("idx: %u\r\n", charArrayDataStruct->tmpSelectedIndex);
+							// LOG("idx: %u\r\n", charArrayDataStruct->tmpSelectedIndex);
 							this->Refresh();
 						}
 					}
@@ -1048,7 +1048,7 @@ void DLDisplay::_drawPage(uint8_t pageId)
 void DLDisplay::_drawPageValues(uint8_t pageId)
 {
 	uint8_t selectedItemIndex = this->_pages[this->_currentPage].selectedItemIndex;
-	LOG("---\r\n");
+	// LOG("---\r\n");
 	for (uint8_t n = 0; n < this->_pages[pageId].pageItemCount; n++)
 	{
 		if (this->_pages[pageId].pageItems[n].visible == false)
@@ -1056,18 +1056,22 @@ void DLDisplay::_drawPageValues(uint8_t pageId)
 			continue;
 		}
 		
-		if (this->_pages[this->_currentPage].pageItems[selectedItemIndex].index == this->_pages[pageId].pageItems[n].index)
+		if (this->_pages[pageId].pageItems[n].selectable == true)
 		{
-			this->LCD.setCursor(this->_pages[pageId].pageItems[n].col - this->_pages[pageId].pageItems[n].selectorColOffset, this->_pages[pageId].pageItems[n].row);
-			this->LCD.print(">");
-			LOG("print '>'\r\n");
+			if (this->_pages[this->_currentPage].pageItems[selectedItemIndex].index == this->_pages[pageId].pageItems[n].index)
+			{
+				this->LCD.setCursor(this->_pages[pageId].pageItems[n].col - this->_pages[pageId].pageItems[n].selectorColOffset, this->_pages[pageId].pageItems[n].row);
+				this->LCD.print(">");
+				// LOG("print '>'\r\n");
+			}
+			else if (this->_pages[this->_currentPage].pageItems[selectedItemIndex].index != this->_pages[pageId].pageItems[n].index)
+			{
+				this->LCD.setCursor(this->_pages[pageId].pageItems[n].col - this->_pages[pageId].pageItems[n].selectorColOffset, this->_pages[pageId].pageItems[n].row);
+				this->LCD.print(" ");
+				// LOG("x:%u y:%u print ' '\r\n", this->_pages[pageId].pageItems[n].col - this->_pages[pageId].pageItems[n].selectorColOffset, this->_pages[pageId].pageItems[n].row);
+			}
 		}
-		else if (this->_pages[this->_currentPage].pageItems[selectedItemIndex].index != this->_pages[pageId].pageItems[n].index)
-		{
-			this->LCD.setCursor(this->_pages[pageId].pageItems[n].col - this->_pages[pageId].pageItems[n].selectorColOffset, this->_pages[pageId].pageItems[n].row);
-			this->LCD.print(" ");
-			LOG("print ' '\r\n");
-		}
+		
 		// Serial.println(this->_pages[pageId].pageItems[n].col);
 		// Serial.println(this->_pages[pageId].pageItems[n].row);
 
@@ -1140,7 +1144,7 @@ void DLDisplay::_drawPageValues(uint8_t pageId)
 			}
 		}
 	}
-	LOG("---\r\n");
+	// LOG("---\r\n");
 
 	// if (page == DLPAGEENUM::VALUES)
 	// {
@@ -1243,6 +1247,10 @@ void DLDisplay::_displayValue(uint16_t val, bool visible, DLUnit_t unit)
 	else if (unit == DLUNIT::OHM)
 	{
 		this->LCD.print("O");
+	}
+	else if (unit == DLUNIT::WATTHOUR)
+	{
+		this->LCD.print("Wh");
 	}
 }
 

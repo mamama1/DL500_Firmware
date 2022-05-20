@@ -79,7 +79,8 @@ class DLDisplay
 			AMPERE =					0x01,
 			VOLT =						0x02,
 			WATT =						0x03,
-			OHM =						0x04
+			OHM =						0x04,
+			WATTHOUR =					0x05
 		} DLUnit_t;
 
 		typedef enum DLICON : uint8_t
