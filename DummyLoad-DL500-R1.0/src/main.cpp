@@ -66,7 +66,7 @@ uint16_t milliAmpsReadVal = 0;
 uint16_t voltsReadVal = 0;
 uint16_t powerReadVal = 0;
 
-uint32_t wattHourValInternal = 0;
+uint64_t wattHourValInternal = 0;
 uint16_t wattHourVal = 0;
 
 uint8_t IP[4] = {192, 168, 25, 222};
